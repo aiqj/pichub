@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicHub - 安全的图床服务</title>
+    <meta name="description" content="安全、高效的Cloudflare R2图床">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2659/2659360.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2659/2659360.png">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 添加可爱字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="anime-bg"></div>
+        <header class="app-header">
+            <div class="logo-container">
+                <div class="mascot"></div>
+                <h1><i class="fas fa-cloud"></i> PicHub</h1>
+                <p>可爱的二次元图床服务</p>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="auth-section" id="authSection">
+                <h2>API 授权</h2>
+                <div class="input-group">
+                    <input type="password" id="apiTokenInput" placeholder="请输入 API Token">
+                    <button id="authButton" class="btn">授权</button>
+                </div>
+                <div class="auth-tip">
+                    <p><i class="fas fa-info-circle"></i> 需要API Token才能上传图片</p>
+                </div>
+            </div>
+
+            <div class="upload-section hidden" id="uploadSection">
+                <div class="upload-container" id="dropArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p>将图片拖放到这里，或</p>
+                    <label for="fileInput" class="btn">选择图片</label>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" hidden>
+                    <p class="paste-tip"><i class="fas fa-clipboard"></i> 支持直接粘贴截图 (Ctrl+V)</p>
+                    <p class="upload-limits">
+                        支持格式: JPEG, PNG, WebP, GIF, SVG | 最大: 50MB
+                    </p>
+                </div>
+
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <p id="progressText">上传中... 0%</p>
+                </div>
+            </div>
+
+            <div class="results-section hidden" id="resultsSection">
+                <h2>上传成功</h2>
+                
+                <div class="result-image-container">
+                    <img id="resultImage" src="" alt="上传的图片">
+                </div>
+                
+                <div class="image-info">
+                    <div class="info-group">
+                        <label>图片URL</label>
+                        <div class="copy-field">
+                            <input type="text" id="imageUrl" readonly>
+                            <button class="copy-btn" data-clipboard-target="#imageUrl"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="info-group">
+                        <label>HTML代码</label>
+                        <div class="copy-field">
+                            <input type="text" id="htmlCode" readonly>
+                            <button class="copy-btn" data-clipboard-target="#htmlCode"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="info-group">
+                        <label>Markdown代码</label>
+                        <div class="copy-field">
+                            <input type="text" id="markdownCode" readonly>
+                            <button class="copy-btn" data-clipboard-target="#markdownCode"><i class="fas fa-copy"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="file-info">
+                        <div class="info-item">
+                            <span class="label">文件名:</span>
+                            <span id="fileName"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">文件大小:</span>
+                            <span id="fileSize"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">文件类型:</span>
+                            <span id="fileType"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">上传时间:</span>
+                            <span id="uploadTime"></span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="uploadAnother">上传另一张图片</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <div class="notifications" id="notificationsContainer"></div>
+            <p>&copy; 2025 PicHub - 基于 Cloudflare R2 构建</p>
+        </footer>
+    </div>
+
+    <!-- 加载剪贴板库和主应用JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html> 

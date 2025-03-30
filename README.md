@@ -1,4 +1,4 @@
-# PicHub - 安全的Cloudflare R2图床
+# PicHub - 图港
 
 PicHub是一个基于Cloudflare R2存储和Workers的高性能图床解决方案，提供安全的图片上传、存储和访问功能。
 

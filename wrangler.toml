@@ -1,12 +1,19 @@
 name = "pichub"
 main = "worker/index.js"
-compatibility_date = "2023-12-01"
+# pages_build_output_dir = "src"
+compatibility_date = "2025-03-30"
 compatibility_flags = ["nodejs_compat"]
 
 # 绑定R2存储桶
 [[r2_buckets]]
 binding = "R2_BUCKET"
 bucket_name = "pichub"
+
+# D1数据库配置
+[[d1_databases]]
+binding = "DB" 
+database_name = "pichub"
+database_id = "07e0134c-593e-4c65-8cc6-62f7f295754b"
 
 # 环境变量配置
 [vars]
@@ -17,13 +24,6 @@ CACHE_CONTROL = "public, max-age=31536000" # 1年缓存
 ALLOWED_REFERERS = "*"  # 防盗链配置，域名列表用逗号分隔，例如: "example.com,test.org" 或 "*" 允许所有
 DEFAULT_IMAGE = ""      # 可选: 防盗链时显示的默认图片文件名
 
-# 开发环境配置
-[env.dev]
-vars = { ENVIRONMENT = "development" }
-
-# 生产环境配置
-[env.production]
-vars = { ENVIRONMENT = "production" }
-
 # 需要在Cloudflare的Worker界面中设置以下秘密环境变量:
-# - UPLOAD_API_TOKEN: 用于验证上传请求的API令牌 
+# - UPLOAD_API_TOKEN: 用于验证上传请求的API令牌
+# - JWT_SECRET: 用于JWT签名的密钥 

@@ -1,0 +1,50 @@
+<!-- src/login.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicHub - 用户登录</title>
+    <meta name="description" content="安全、高效的Cloudflare R2图床">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2659/2659360.png" type="image/png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2659/2659360.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <div class="anime-bg"></div>
+        <header class="app-header">
+            <div class="logo-container">
+                <div class="mascot"></div>
+                <h1><i class="fas fa-cloud"></i> PicHub</h1>
+                <p>可爱的二次元图床服务</p>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="auth-section" id="loginSection">
+                <h2>用户登录</h2>
+                <div class="input-group">
+                    <input type="text" id="usernameInput" placeholder="用户名">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="passwordInput" placeholder="密码">
+                </div>
+                <button id="loginButton" class="btn">登录</button>
+                <div class="auth-tip">
+                    <p>还没有账号？<a href="register.html">立即注册</a></p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <div class="notifications" id="notificationsContainer"></div>
+            <p>&copy; 2025 PicHub - 基于 Cloudflare R2 构建</p>
+        </footer>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

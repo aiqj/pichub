@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, CSSProperties } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -7,30 +7,73 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
 }
 
+// 定义样式
+const styles = {
+  container: (fullWidth: boolean) => ({
+    width: fullWidth ? '100%' : 'auto',
+  }),
+  label: {
+    display: 'block',
+    color: '#e4e4e7',
+    fontWeight: '500',
+    marginBottom: '0.25rem',
+  },
+  inputWrapper: {
+    position: 'relative' as CSSProperties['position'],
+  },
+  iconWrapper: {
+    position: 'absolute' as CSSProperties['position'],
+    inset: '0 auto 0 0',
+    display: 'flex',
+    alignItems: 'center',
+    paddingLeft: '0.75rem',
+    pointerEvents: 'none' as CSSProperties['pointerEvents'],
+    color: '#a1a1aa',
+  },
+  input: (hasIcon: boolean, hasError: boolean) => ({
+    width: '100%',
+    borderRadius: '0.375rem',
+    border: `1px solid ${hasError ? '#ef4444' : '#52525b'}`,
+    backgroundColor: '#27272a',
+    padding: '0.5rem 0.75rem',
+    paddingLeft: hasIcon ? '2.5rem' : '0.75rem',
+    color: '#e4e4e7',
+    outline: 'none',
+    ':focus': {
+      borderColor: '#a855f7',
+      boxShadow: '0 0 0 1px #a855f7',
+    },
+    '::placeholder': {
+      color: '#71717a',
+    },
+  }),
+  error: {
+    marginTop: '0.25rem',
+    fontSize: '0.875rem',
+    color: '#ef4444',
+  },
+};
+
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, fullWidth = false, icon, className = '', ...props }, ref) => {
     return (
-      <div className={`${fullWidth ? 'w-full' : ''} ${className}`}>
+      <div style={{...styles.container(fullWidth), ...(className ? { className } : {})}}>
         {label && (
-          <label className="block text-gray-200 font-medium mb-1">{label}</label>
+          <label style={styles.label}>{label}</label>
         )}
-        <div className="relative">
+        <div style={styles.inputWrapper}>
           {icon && (
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+            <div style={styles.iconWrapper}>
               {icon}
             </div>
           )}
           <input
             ref={ref}
-            className={`w-full rounded-md border ${
-              error ? 'border-red-500' : 'border-gray-600'
-            } bg-gray-800 px-3 py-2 text-gray-200 placeholder:text-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${
-              icon ? 'pl-10' : ''
-            }`}
+            style={styles.input(!!icon, !!error)}
             {...props}
           />
         </div>
-        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+        {error && <p style={styles.error}>{error}</p>}
       </div>
     );
   }

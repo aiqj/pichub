@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Input from '../components/ui/Input';
@@ -11,11 +11,165 @@ type NotificationType = 'info' | 'success' | 'warning' | 'error';
 // 标记此页面不使用布局
 Login.noLayout = true;
 
+// 定义样式
+const styles = {
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'linear-gradient(to bottom right, #18181b, #27272a, #18181b)',
+    padding: '3rem 1rem',
+  },
+  notificationsContainer: {
+    position: 'fixed' as CSSProperties['position'],
+    top: '1rem',
+    right: '1rem',
+    zIndex: 50,
+    display: 'flex',
+    flexDirection: 'column' as CSSProperties['flexDirection'],
+    gap: '0.5rem'
+  },
+  notification: {
+    padding: '0.75rem 1rem',
+    borderRadius: '0.375rem',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    maxWidth: '28rem',
+    backdropFilter: 'blur(4px)',
+    border: '1px solid'
+  },
+  notificationError: {
+    backgroundColor: 'rgba(127, 29, 29, 0.3)',
+    borderColor: '#991b1b',
+    color: '#f87171'
+  },
+  notificationSuccess: {
+    backgroundColor: 'rgba(20, 83, 45, 0.3)',
+    borderColor: '#166534',
+    color: '#4ade80'
+  },
+  notificationWarning: {
+    backgroundColor: 'rgba(120, 53, 15, 0.3)',
+    borderColor: '#92400e',
+    color: '#fbbf24'
+  },
+  notificationInfo: {
+    backgroundColor: 'rgba(30, 58, 138, 0.3)',
+    borderColor: '#1e40af',
+    color: '#60a5fa'
+  },
+  formContainer: {
+    maxWidth: '28rem',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column' as CSSProperties['flexDirection'],
+    gap: '2rem',
+    backgroundColor: 'rgba(39, 39, 42, 0.3)',
+    backdropFilter: 'blur(4px)',
+    padding: '2rem',
+    borderRadius: '0.75rem',
+    border: '1px solid #3f3f46',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+  },
+  header: {
+    marginTop: '1.5rem',
+    textAlign: 'center' as CSSProperties['textAlign']
+  },
+  title: {
+    fontSize: '1.875rem',
+    fontWeight: '800',
+    background: 'linear-gradient(to right, #c084fc, #a855f7)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent'
+  },
+  subtitle: {
+    marginTop: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#a1a1aa'
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column' as CSSProperties['flexDirection'],
+    gap: '1.5rem'
+  },
+  formFields: {
+    display: 'flex',
+    flexDirection: 'column' as CSSProperties['flexDirection'],
+    gap: '1rem'
+  },
+  registerLink: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  registerLinkText: {
+    fontSize: '0.875rem'
+  },
+  link: {
+    color: '#c084fc',
+    transition: 'color 0.2s'
+  },
+  linkHover: {
+    color: '#d8b4fe'
+  },
+  divider: {
+    position: 'relative' as CSSProperties['position'],
+    marginTop: '1.5rem'
+  },
+  dividerLine: {
+    position: 'absolute' as CSSProperties['position'],
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center'
+  },
+  dividerHr: {
+    width: '100%',
+    borderTop: '1px solid #3f3f46'
+  },
+  dividerText: {
+    position: 'relative' as CSSProperties['position'],
+    display: 'flex',
+    justifyContent: 'center',
+    fontSize: '0.875rem'
+  },
+  dividerTextInner: {
+    padding: '0 0.5rem',
+    backgroundColor: 'rgba(39, 39, 42, 0.3)',
+    color: '#a1a1aa'
+  },
+  footerText: {
+    marginTop: '1.5rem',
+    textAlign: 'center' as CSSProperties['textAlign'],
+    fontSize: '0.75rem',
+    color: '#71717a'
+  },
+  debugInfo: {
+    marginTop: '1rem'
+  },
+  debugToggle: {
+    cursor: 'pointer',
+    color: '#71717a',
+    fontSize: '0.75rem'
+  },
+  debugContent: {
+    marginTop: '0.5rem',
+    fontSize: '0.75rem',
+    whiteSpace: 'pre-wrap',
+    overflowX: 'auto' as CSSProperties['overflowX'],
+    backgroundColor: 'rgba(24, 24, 27, 0.5)',
+    padding: '0.75rem',
+    borderRadius: '0.25rem',
+    color: '#a1a1aa'
+  }
+};
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: NotificationType}>>([]);
   const [debugInfo, setDebugInfo] = useState<string>('');
+  const [showDebug, setShowDebug] = useState(false);
+  const [isHovering, setIsHovering] = useState<{[key: string]: boolean}>({});
   const router = useRouter();
   const { login, isAuthenticated } = useAuth();
   
@@ -142,37 +296,58 @@ export default function Login() {
     }
   };
 
+  // 处理链接悬停
+  const handleMouseEnter = (item: string) => {
+    setIsHovering(prev => ({ ...prev, [item]: true }));
+  };
+
+  const handleMouseLeave = (item: string) => {
+    setIsHovering(prev => ({ ...prev, [item]: false }));
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div style={styles.container}>
       {/* 通知组件 */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {notifications.map(notification => (
-          <div 
-            key={notification.id}
-            className={`px-4 py-3 rounded-md shadow-lg max-w-md backdrop-blur-sm border ${
-              notification.type === 'error' ? 'bg-red-900/30 border-red-800 text-red-400' :
-              notification.type === 'success' ? 'bg-green-900/30 border-green-800 text-green-400' :
-              notification.type === 'warning' ? 'bg-amber-900/30 border-amber-800 text-amber-400' :
-              'bg-blue-900/30 border-blue-800 text-blue-400'
-            }`}
-          >
-            {notification.message}
-          </div>
-        ))}
+      <div style={styles.notificationsContainer}>
+        {notifications.map(notification => {
+          let notificationStyle;
+          switch(notification.type) {
+            case 'error':
+              notificationStyle = styles.notificationError;
+              break;
+            case 'success':
+              notificationStyle = styles.notificationSuccess;
+              break;
+            case 'warning':
+              notificationStyle = styles.notificationWarning;
+              break;
+            default:
+              notificationStyle = styles.notificationInfo;
+          }
+          
+          return (
+            <div 
+              key={notification.id}
+              style={{...styles.notification, ...notificationStyle}}
+            >
+              {notification.message}
+            </div>
+          );
+        })}
       </div>
 
-      <div className="max-w-md w-full space-y-8 bg-gray-800/30 backdrop-blur-sm p-8 rounded-xl border border-gray-700 shadow-2xl">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
+      <div style={styles.formContainer}>
+        <div style={styles.header}>
+          <h2 style={styles.title}>
             PicHub
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p style={styles.subtitle}>
             高效、安全的图片管理平台
           </p>
         </div>
         
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="space-y-4">
+        <form style={styles.form} onSubmit={handleLogin}>
+          <div style={styles.formFields}>
             <Input
               id="username"
               name="username"
@@ -220,9 +395,17 @@ export default function Login() {
             </Button>
           </div>
           
-          <div className="flex items-center justify-center">
-            <div className="text-sm">
-              <Link href="/register" className="text-indigo-400 hover:text-indigo-300">
+          <div style={styles.registerLink}>
+            <div style={styles.registerLinkText}>
+              <Link 
+                href="/register" 
+                style={{ 
+                  ...styles.link, 
+                  ...(isHovering['register'] ? styles.linkHover : {}) 
+                }}
+                onMouseEnter={() => handleMouseEnter('register')}
+                onMouseLeave={() => handleMouseLeave('register')}
+              >
                 没有账号？立即注册
               </Link>
             </div>
@@ -231,29 +414,34 @@ export default function Login() {
         
         {/* 调试信息，仅在开发环境显示 */}
         {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4">
+          <div style={styles.debugInfo}>
             <details>
-              <summary className="cursor-pointer text-gray-500 text-xs">调试信息</summary>
-              <pre className="mt-2 text-xs whitespace-pre-wrap overflow-x-auto bg-gray-900/50 p-3 rounded text-gray-400">
-                {debugInfo}
-              </pre>
+              <summary 
+                style={styles.debugToggle}
+                onClick={() => setShowDebug(!showDebug)}
+              >
+                调试信息
+              </summary>
+              {showDebug && (
+                <pre style={styles.debugContent}>
+                  {debugInfo}
+                </pre>
+              )}
             </details>
           </div>
         )}
         
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800/30 text-gray-400">科幻风格体验</span>
-            </div>
+        <div style={styles.divider}>
+          <div style={styles.dividerLine}>
+            <div style={styles.dividerHr}></div>
           </div>
+          <div style={styles.dividerText}>
+            <span style={styles.dividerTextInner}>科幻风格体验</span>
+          </div>
+        </div>
           
-          <div className="mt-6 text-center text-xs text-gray-500">
-            <p>登录即表示您同意我们的服务条款和隐私政策</p>
-          </div>
+        <div style={styles.footerText}>
+          <p>登录即表示您同意我们的服务条款和隐私政策</p>
         </div>
       </div>
     </div>

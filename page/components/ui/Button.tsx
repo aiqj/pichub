@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 interface ButtonProps {
   children: React.ReactNode;
@@ -12,6 +12,98 @@ interface ButtonProps {
   loading?: boolean;
 }
 
+// 定义样式
+const styles = {
+  base: {
+    borderRadius: '0.375rem',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+    outline: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  disabled: {
+    opacity: 0.7,
+    cursor: 'not-allowed',
+  },
+  sizes: {
+    sm: {
+      padding: '0.375rem 0.75rem',
+      fontSize: '0.875rem',
+    },
+    md: {
+      padding: '0.5rem 1rem',
+      fontSize: '1rem',
+    },
+    lg: {
+      padding: '0.75rem 1.5rem',
+      fontSize: '1.125rem',
+    },
+  },
+  variants: {
+    primary: {
+      background: 'linear-gradient(to right, #9333ea, #9333ea)',
+      color: 'white',
+      ':hover': {
+        background: 'linear-gradient(to right, #7e22ce, #7e22ce)',
+      },
+    },
+    secondary: {
+      border: '1px solid #d4d4d8',
+      backgroundColor: 'white',
+      color: '#3f3f46',
+      ':hover': {
+        backgroundColor: '#f4f4f5',
+      },
+    },
+    danger: {
+      background: 'linear-gradient(to right, #ef4444, #dc2626)',
+      color: 'white',
+      ':hover': {
+        background: 'linear-gradient(to right, #dc2626, #b91c1c)',
+      },
+    },
+    success: {
+      background: 'linear-gradient(to right, #10b981, #22c55e)',
+      color: 'white',
+      ':hover': {
+        background: 'linear-gradient(to right, #059669, #16a34a)',
+      },
+    },
+    warning: {
+      background: 'linear-gradient(to right, #f59e0b, #f97316)',
+      color: 'white',
+      ':hover': {
+        background: 'linear-gradient(to right, #d97706, #ea580c)',
+      },
+    },
+    info: {
+      background: 'linear-gradient(to right, #06b6d4, #3b82f6)',
+      color: 'white',
+      ':hover': {
+        background: 'linear-gradient(to right, #0891b2, #2563eb)',
+      },
+    },
+  },
+  spinner: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+  },
+  spinnerIcon: {
+    animation: 'spin 1s linear infinite',
+    marginLeft: '-0.25rem',
+    marginRight: '0.5rem',
+    height: '1rem',
+    width: '1rem',
+  },
+};
+
 const Button: React.FC<ButtonProps> = ({
   children,
   onClick,
@@ -23,44 +115,28 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   loading = false,
 }) => {
-  const baseClasses = 'rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
-  const variantClasses = {
-    primary: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 focus:ring-indigo-500',
-    secondary: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-indigo-500',
-    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-red-500',
-    success: 'bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 focus:ring-green-500',
-    warning: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 focus:ring-orange-500',
-    info: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 focus:ring-blue-500',
+  // 合并样式
+  const buttonStyle = {
+    ...styles.base,
+    ...(fullWidth ? styles.fullWidth : {}),
+    ...(disabled || loading ? styles.disabled : {}),
+    ...styles.sizes[size],
+    ...styles.variants[variant],
   };
-  
-  const sizeClasses = {
-    sm: 'py-1.5 px-3 text-sm',
-    md: 'py-2 px-4 text-base',
-    lg: 'py-3 px-6 text-lg',
-  };
-  
-  const classes = [
-    baseClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    fullWidth ? 'w-full' : '',
-    disabled || loading ? 'opacity-70 cursor-not-allowed' : '',
-    className,
-  ].join(' ');
   
   return (
     <button
       type={type}
-      className={classes}
+      style={buttonStyle}
       onClick={onClick}
       disabled={disabled || loading}
+      className={className}
     >
       {loading ? (
-        <div className="flex items-center justify-center space-x-2">
-          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <div style={styles.spinner}>
+          <svg style={styles.spinnerIcon} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           <span>处理中...</span>
         </div>

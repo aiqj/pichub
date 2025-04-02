@@ -122,8 +122,8 @@ function Register() {
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="电子邮件（选填）"
-              label="电子邮件（选填）"
+              placeholder="电子邮件"
+              label="电子邮件"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               fullWidth

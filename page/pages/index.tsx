@@ -575,21 +575,6 @@ const Home = () => {
         )}
       </div>
       
-      <div className="mt-8 bg-gray-800/30 backdrop-blur-sm p-4 max-w-sm rounded-xl border border-gray-700 text-center">
-        <h3 className="text-gray-300 font-medium mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-          </svg>
-          用户信息
-        </h3>
-        {user && (
-          <div className="text-sm text-gray-400 mb-2">
-            <p>账户: {user.username}</p>
-            <p>角色: {user.role === 'admin' ? '管理员' : '普通用户'}</p>
-          </div>
-        )}
-      </div>
-      
       <div className="mt-12 max-w-3xl w-full text-center">
         <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-4">
           关于PicHub

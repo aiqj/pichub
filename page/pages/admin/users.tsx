@@ -175,6 +175,7 @@ const AdminUsersPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             }
+            autoComplete="off"
           />
         </div>
       </div>
@@ -314,6 +315,8 @@ const AdminUsersPage = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     fullWidth
+                    autoComplete="new-password"
+                    name="new-password"
                   />
                   
                   <Input
@@ -322,6 +325,8 @@ const AdminUsersPage = () => {
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     fullWidth
+                    autoComplete="new-password"
+                    name="confirm-new-password"
                   />
                 </div>
                 

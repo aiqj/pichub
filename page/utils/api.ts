@@ -10,28 +10,22 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // 禁用跨域请求携带凭证，解决CORS问题
-  withCredentials: false 
+  withCredentials: false
 });
 
 // 请求拦截器 - 添加token到请求头
 api.interceptors.request.use(
   (config) => {
-    // A只在客户端执行
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
-      if (token) {
+      // 登录和注册接口不需要token
+      if (token && !config.url?.includes('/api/login') && !config.url?.includes('/api/register')) {
         config.headers.Authorization = `Bearer ${token}`;
-        // 调试信息
-        console.log(`请求拦截: 添加Authorization到 ${config.url}`);
-      } else {
-        console.log(`请求拦截: 无token可用于 ${config.url}`);
       }
     }
     return config;
   },
   (error) => {
-    console.error('请求拦截器错误:', error);
     return Promise.reject(error);
   }
 );
@@ -39,22 +33,19 @@ api.interceptors.request.use(
 // 响应拦截器 - 处理错误
 api.interceptors.response.use(
   (response) => {
-    // 调试信息
-    console.log(`响应成功: ${response.config.url}`, response.status);
     return response;
   },
   (error) => {
-    // 调试信息
-    console.error('API响应错误:', error.message);
     if (error.response) {
-      console.error('响应状态:', error.response.status);
-      console.error('响应数据:', error.response.data);
-    }
-    
-    // 仅标记401错误，但不自动重定向
-    if (typeof window !== 'undefined' && error.response && error.response.status === 401) {
-      console.warn('收到401错误，认证可能已过期');
-      error.isAuthError = true;
+      if (error.response.status === 401) {
+        error.isAuthError = true;
+        
+        // 清除本地存储的认证信息
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
     }
     return Promise.reject(error);
   }

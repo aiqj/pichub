@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { authApi } from '../utils/api';
 
 // 通知类型定义
 type NotificationType = 'info' | 'success' | 'warning' | 'error';
@@ -94,29 +95,10 @@ export default function Login() {
     
     try {
       showNotification('正在验证身份...', 'info');
-      console.log('开始登录请求...', { username });
-      
-      const response = await fetch(`${apiEndpoint}/api/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
-      
-      const data = await response.json();
+
+      const response = await authApi.login({ username, password });
+      const data = response.data;
       console.log('登录响应:', data);
-      
-      if (!response.ok) {
-        if (data.error === 'Account not activated') {
-          showNotification(data.message || '账号未激活，请联系管理员', 'error');
-        } else if (data.error === 'Invalid credentials') {
-          showNotification('用户名或密码错误', 'error');
-        } else {
-          showNotification(data.error || '登录失败', 'error');
-        }
-        return;
-      }
       
       if (!data.token || !data.user) {
         showNotification('服务器响应格式错误，请联系管理员', 'error');
@@ -137,8 +119,30 @@ export default function Login() {
         router.push('/');
       }, 1000);
     } catch (error: any) {
-      console.error('Login error:', error);
-      showNotification(`登录请求失败: ${error.message}`, 'error');
+      // 处理不同类型的错误
+      if (error.response) {
+        const { status, data } = error.response;
+        
+        switch (status) {
+          case 401:
+            showNotification('用户名或密码错误', 'error');
+            break;
+          case 403:
+            showNotification(data.message || '账号未激活，请联系管理员', 'error');
+            break;
+          case 500:
+            showNotification('服务器错误，请稍后重试', 'error');
+            break;
+          default:
+            showNotification(data.error || '登录失败，请重试', 'error');
+        }
+      } else if (error.request) {
+        // 请求已发出但没有收到响应
+        showNotification('无法连接到服务器，请检查网络连接', 'error');
+      } else {
+        // 请求配置出错
+        showNotification('请求配置错误，请重试', 'error');
+      }
     }
   };
 

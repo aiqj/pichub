@@ -112,7 +112,7 @@ function jsonResponse(data, status = 200, request, env) {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': allowOrigin || env.CORS_ALLOW_ORIGIN,
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     }
@@ -156,7 +156,7 @@ function handleCors(request, env) {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': allowOrigin,
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     }

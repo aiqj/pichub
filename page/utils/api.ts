@@ -100,9 +100,8 @@ export const fileApi = {
     return api.get('/api/files');
   },
   deleteFile: (fileId: number) => {
-    return api.post('/api/files/delete', { 
-      fileId,
-      action: 'delete' 
+    return api.delete('/api/files', {
+      data: { fileId }
     });
   }
 };

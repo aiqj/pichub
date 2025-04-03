@@ -6,9 +6,10 @@ import { fileApi } from '../utils/api';
 interface FileCardProps {
   file: FileItem;
   onDelete: (id: number) => void;
+  onPreview?: () => void;
 }
 
-const FileCard: React.FC<FileCardProps> = ({ file, onDelete }) => {
+const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
   const [showCopyOptions, setShowCopyOptions] = useState(false);
   const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
   const [isDeleting, setIsDeleting] = useState(false);
@@ -71,7 +72,11 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete }) => {
   
   return (
     <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-indigo-900/20 hover:border-indigo-500/50">
-      <div className="relative aspect-video bg-gray-900 overflow-hidden">
+      <div 
+        className="relative aspect-video bg-gray-900 overflow-hidden"
+        style={{ cursor: onPreview ? 'zoom-in' : 'default' }}
+        onClick={onPreview}
+      >
         {/* 图片预览 */}
         {file.file_type.startsWith('image/') && (
           <img
@@ -85,6 +90,17 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete }) => {
         <div className="absolute top-2 right-2 bg-black/70 text-xs px-2 py-1 rounded-full text-indigo-400 border border-indigo-500/40">
           {file.file_type.split('/')[1].toUpperCase()}
         </div>
+        
+        {/* 预览图标提示 */}
+        {onPreview && (
+          <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
+            <div className="bg-black/70 rounded-full p-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="p-4">
@@ -99,13 +115,35 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete }) => {
           </div>
           
           <div className="flex justify-between items-center mt-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setShowCopyOptions(!showCopyOptions)}
-            >
-              {showCopyOptions ? '隐藏链接' : '分享链接'}
-            </Button>
+            {onPreview ? (
+              <div className="flex space-x-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setShowCopyOptions(!showCopyOptions)}
+                >
+                  {showCopyOptions ? '隐藏链接' : '分享链接'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="info"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPreview();
+                  }}
+                >
+                  预览
+                </Button>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setShowCopyOptions(!showCopyOptions)}
+              >
+                {showCopyOptions ? '隐藏链接' : '分享链接'}
+              </Button>
+            )}
             
             <Button
               size="sm"

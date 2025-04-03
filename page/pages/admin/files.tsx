@@ -3,6 +3,7 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { FileItem } from '../../types';
 import { adminApi, fileApi } from '../../utils/api';
+import ImagePreview from '../../components/ImagePreview';
 
 const AdminFilesPage = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -13,6 +14,9 @@ const AdminFilesPage = () => {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState<boolean>(false);
+  const [previewAlt, setPreviewAlt] = useState<string>('图片预览');
   
   // 加载文件列表
   useEffect(() => {
@@ -63,6 +67,20 @@ const AdminFilesPage = () => {
     } finally {
       setDeleteLoading(false);
     }
+  };
+  
+  // 处理图片预览
+  const handlePreviewImage = (file: FileItem) => {
+    const apiHost = process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST;
+    setPreviewUrl(`${apiHost}/images/${file.file_name}`);
+    setPreviewAlt(file.original_name);
+    setShowImagePreview(true);
+  };
+  
+  // 关闭预览
+  const handleClosePreview = () => {
+    setShowImagePreview(false);
+    setPreviewUrl(null);
   };
   
   // 格式化文件大小
@@ -186,7 +204,8 @@ const AdminFilesPage = () => {
                             <img 
                               src={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`} 
                               alt="" 
-                              className="h-10 w-10 object-cover"
+                              className="h-10 w-10 object-cover cursor-pointer"
+                              onClick={() => handlePreviewImage(file)}
                             />
                           ) : (
                             <div className="h-10 w-10 flex items-center justify-center bg-gray-800">
@@ -229,6 +248,14 @@ const AdminFilesPage = () => {
                       >
                         查看
                       </a>
+                      {file.file_type.startsWith('image/') && (
+                        <button
+                          onClick={() => handlePreviewImage(file)}
+                          className="text-cyan-400 hover:text-cyan-300 mr-4"
+                        >
+                          预览
+                        </button>
+                      )}
                       <Button
                         size="sm"
                         variant="danger"
@@ -243,6 +270,15 @@ const AdminFilesPage = () => {
             </table>
           </div>
         </div>
+      )}
+      
+      {/* 图片预览模态框 */}
+      {showImagePreview && previewUrl && (
+        <ImagePreview 
+          imageUrl={previewUrl} 
+          onClose={handleClosePreview}
+          alt={previewAlt}
+        />
       )}
       
       {isDeleteModalOpen && selectedFile && (

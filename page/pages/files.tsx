@@ -3,11 +3,15 @@ import Layout from '../components/layout/Layout';
 import FileCard from '../components/FileCard';
 import { fileApi } from '../utils/api';
 import { FileItem } from '../types';
+import ImagePreview from '../components/ImagePreview';
 
 const FilesPage = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState<boolean>(false);
+  const [previewAlt, setPreviewAlt] = useState<string>('图片预览');
   
   // 加载文件列表
   useEffect(() => {
@@ -28,6 +32,20 @@ const FilesPage = () => {
     
     fetchFiles();
   }, []);
+  
+  // 处理图片预览
+  const handlePreviewImage = (file: FileItem) => {
+    const apiHost = process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST;
+    setPreviewUrl(`${apiHost}/images/${file.file_name}`);
+    setPreviewAlt(file.original_name);
+    setShowImagePreview(true);
+  };
+  
+  // 关闭预览
+  const handleClosePreview = () => {
+    setShowImagePreview(false);
+    setPreviewUrl(null);
+  };
   
   // 处理文件删除
   const handleDeleteFile = (id: number) => {
@@ -90,7 +108,12 @@ const FilesPage = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {files.map((file) => (
-              <FileCard key={file.id} file={file} onDelete={handleDeleteFile} />
+              <FileCard 
+                key={file.id} 
+                file={file} 
+                onDelete={handleDeleteFile} 
+                onPreview={file.file_type.startsWith('image/') ? () => handlePreviewImage(file) : undefined} 
+              />
             ))}
           </div>
         )}
@@ -101,6 +124,15 @@ const FilesPage = () => {
           </div>
         )}
       </div>
+      
+      {/* 图片预览模态框 */}
+      {showImagePreview && previewUrl && (
+        <ImagePreview 
+          imageUrl={previewUrl} 
+          onClose={handleClosePreview}
+          alt={previewAlt}
+        />
+      )}
     </div>
   );
 };

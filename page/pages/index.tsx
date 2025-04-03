@@ -3,6 +3,7 @@ import Button from '../components/ui/Button';
 import { useRouter } from 'next/router';
 import { CodeSnippet } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import ImagePreview from '../components/ImagePreview';
 
 const Home = () => {
   console.log('渲染Home组件');
@@ -16,6 +17,8 @@ const Home = () => {
   const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [debugInfo, setDebugInfo] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -160,6 +163,10 @@ const Home = () => {
     if (droppedFile && isValidFile(droppedFile)) {
       setFile(droppedFile);
       setErrorMsg('');
+      
+      // 生成预览URL
+      const objectUrl = URL.createObjectURL(droppedFile);
+      setPreviewUrl(objectUrl);
     }
   };
   
@@ -170,6 +177,15 @@ const Home = () => {
       if (isValidFile(selectedFile)) {
         setFile(selectedFile);
         setErrorMsg('');
+        
+        // 生成预览URL
+        const objectUrl = URL.createObjectURL(selectedFile);
+        setPreviewUrl(objectUrl);
+        
+        // 返回一个清理函数，在组件卸载时释放URL
+        return () => {
+          URL.revokeObjectURL(objectUrl);
+        };
       }
     }
   };
@@ -308,10 +324,21 @@ const Home = () => {
     setFile(null);
     setErrorMsg('');
     setUploadProgress(0);
+    setPreviewUrl(null);
+    setShowImagePreview(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
+  
+  // 清理预览URL
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
   
   // 只有在认证状态完成加载后才能进行正常渲染，否则显示加载器
   if (loading) {
@@ -452,14 +479,24 @@ const Home = () => {
                       {file.type} - {formatFileSize(file.size)}
                     </p>
                   </div>
-                  <Button
-                    variant="primary"
-                    onClick={handleUpload}
-                    loading={isUploading}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? '上传中...' : '上传'}
-                  </Button>
+                  <div className="flex space-x-2">
+                    {previewUrl && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowImagePreview(true)}
+                      >
+                        预览
+                      </Button>
+                    )}
+                    <Button
+                      variant="primary"
+                      onClick={handleUpload}
+                      loading={isUploading}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? '上传中...' : '上传'}
+                    </Button>
+                  </div>
                 </div>
                 
                 {isUploading && (
@@ -474,6 +511,15 @@ const Home = () => {
                   </div>
                 )}
               </div>
+            )}
+            
+            {/* 图片预览模态框 */}
+            {showImagePreview && previewUrl && (
+              <ImagePreview 
+                imageUrl={previewUrl} 
+                onClose={() => setShowImagePreview(false)}
+                alt={file?.name || '预览图片'}
+              />
             )}
             
             {errorMsg && (
@@ -508,8 +554,24 @@ const Home = () => {
                 <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-300 font-medium">预览</span>
+                    <Button
+                      size="sm"
+                      variant="info"
+                      onClick={() => {
+                        setPreviewUrl(uploadedData.url);
+                        setShowImagePreview(true);
+                      }}
+                    >
+                      放大查看
+                    </Button>
                   </div>
-                  <div className="flex justify-center bg-gray-900 p-4 rounded-md">
+                  <div 
+                    className="flex justify-center bg-gray-900 p-4 rounded-md cursor-zoom-in"
+                    onClick={() => {
+                      setPreviewUrl(uploadedData.url);
+                      setShowImagePreview(true);
+                    }}
+                  >
                     <img
                       src={uploadedData.url}
                       alt="上传预览"
@@ -517,6 +579,15 @@ const Home = () => {
                     />
                   </div>
                 </div>
+                
+                {/* 图片预览模态框 */}
+                {showImagePreview && previewUrl && (
+                  <ImagePreview 
+                    imageUrl={previewUrl} 
+                    onClose={() => setShowImagePreview(false)}
+                    alt="上传图片预览"
+                  />
+                )}
                 
                 <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
                   <div className="flex justify-between items-center mb-2">

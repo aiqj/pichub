@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// 密码加密不再需要，因为您的表结构中是明文密码
-// 但为了安全起见，我仍然建议加密存储密码
+/*
+ * 非对称加密：bcrypt加密
+ * 注意：它每次加密都会生成不同的密文，所以不能直接比较
+ */
 export async function hashPassword(password) {
   return bcrypt.hash(password, 10);
 }
@@ -15,6 +17,48 @@ export async function verifyPassword(password, hashedPassword) {
   }
   // 否则使用bcrypt比较
   return bcrypt.compare(password, hashedPassword);
+}
+
+// 对称加密：PBKDF2加密
+export async function hashPasswordSecureDeterministic(password) {
+  // 固定盐值 - 在生产环境中应该是复杂且保密的值
+  const FIXED_SALT = 'vlllo.com';
+  
+  // 将密码转换为ArrayBuffer
+  const encoder = new TextEncoder();
+  const passwordBuffer = encoder.encode(password);
+  const saltBuffer = encoder.encode(FIXED_SALT);
+  
+  // 从密码生成密钥
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', 
+    passwordBuffer, 
+    { name: 'PBKDF2' }, 
+    false, 
+    ['deriveBits']
+  );
+  
+  // 使用PBKDF2派生密钥
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: saltBuffer,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    256
+  );
+  
+  // 转换为十六进制字符串
+  const hashArray = Array.from(new Uint8Array(derivedBits));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 验证密码
+export async function verifyPasswordSecureDeterministic(password, storedHash) {
+  const hashedPassword = await hashPasswordSecureDeterministic(password);
+  return hashedPassword === storedHash;
 }
 
 // 生成JWT令牌

@@ -163,17 +163,24 @@ const ProfilePage = () => {
       
       if (response.data && response.data.success) {
         // 更新本地用户数据
-        const updatedUserData = response.data.data || {};
+        const updatedUserData = response.data.user || {};
         updateUserData(updatedUserData);
-        toast.success('个人资料更新成功');
         
-        // 清空密码字段
+        // 更新表单数据以反映新的用户信息
         setFormData({
           ...formData,
+          email: updatedUserData.email || formData.email,
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
         });
+        
+        // 如果更新了头像，确保头像预览也更新
+        if (updatedUserData.avatar) {
+          setAvatarPreview(updatedUserData.avatar);
+        }
+        
+        toast.success('个人资料更新成功');
       } else {
         toast.error(response.data?.message || '更新失败，请重试');
       }

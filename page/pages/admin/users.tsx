@@ -263,7 +263,7 @@ const AdminUsersPage = () => {
                         size="sm"
                         variant={user.is_active ? 'warning' : 'success'}
                         onClick={() => handleToggleUserActive(user)}
-                        disabled={actionLoading}
+                        disabled={actionLoading || user.role === 'admin'}
                       >
                         {user.is_active ? '停用' : '激活'}
                       </Button>

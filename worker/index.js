@@ -9,7 +9,7 @@
  * - 缓存优化
  */
 
-import { hashPassword, verifyPassword, generateToken, authenticate, requireAdmin } from './auth.js';
+import { generateToken, authenticate, requireAdmin, hashPasswordSecureDeterministic, verifyPasswordSecureDeterministic } from './auth.js';
 
 // 已知文件类型的魔数签名
 const FILE_SIGNATURES = {
@@ -269,11 +269,8 @@ async function handleRegister(request, env) {
       }
     }
     
-    // 处理密码 - 这里可以根据需要加密或直接存储
-    let finalPassword = password;
-    if (process.env.STORE_PLAIN_PASSWORD !== 'true') {
-      finalPassword = await hashPassword(password);
-    }
+    // 处理密码
+    const finalPassword = await hashPasswordSecureDeterministic(password);
     
     // 创建用户记录（默认未激活）
     const result = await env.DB.prepare(
@@ -310,7 +307,7 @@ async function handleLogin(request, env) {
     }
     
     // 验证密码
-    const isValidPassword = await verifyPassword(password, user.password);
+    const isValidPassword = await verifyPasswordSecureDeterministic(password, user.password);
     if (!isValidPassword) {
       return jsonResponse({ error: 'Invalid credentials' }, 401, request, env);
     }
@@ -458,16 +455,14 @@ async function handleUpdateUserProfile(request, env) {
         'SELECT password FROM users WHERE id = ?'
       ).bind(user.id).first();
       
-      const isValidPassword = await verifyPassword(currentPassword, userData.password);
+      // 密码比较
+      const isValidPassword = await verifyPasswordSecureDeterministic(currentPassword, userData.password);
       if (!isValidPassword) {
-        return jsonResponse({ error: 'Current password is incorrect' }, 401, request, env);
+        return jsonResponse({ error: 'Current password is incorrect', message: '当前密码不正确' }, 401, request, env);
       }
       
       // 处理新密码
-      let finalPassword = newPassword;
-      if (process.env.STORE_PLAIN_PASSWORD !== 'true') {
-        finalPassword = await hashPassword(newPassword);
-      }
+      const finalPassword = await hashPasswordSecureDeterministic(newPassword);
       
       updateFields.push('password = ?');
       bindParams.push(finalPassword);
@@ -478,7 +473,7 @@ async function handleUpdateUserProfile(request, env) {
     
     // 如果没有要更新的字段，直接返回成功
     if (updateFields.length === 0) {
-      return jsonResponse({ success: true, message: 'No changes to update' }, 200, request, env);
+      return jsonResponse({ success: true, message: '没有要更新的字段' }, 200, request, env);
     }
     
     // 更新用户资料
@@ -487,9 +482,21 @@ async function handleUpdateUserProfile(request, env) {
       `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`
     ).bind(...bindParams).run();
     
+    // 查询最新用户信息
+    const updatedUserData = await env.DB.prepare(
+      'SELECT id, username, email, avatar, created_at, updated_at, is_active, role FROM users WHERE id = ?'
+    ).bind(user.id).first();
+    
     return jsonResponse({ 
       success: true,
-      message: '用户资料更新成功'
+      message: '用户资料更新成功',
+      user: {
+        id: updatedUserData.id,
+        username: updatedUserData.username,
+        email: updatedUserData.email,
+        avatar: updatedUserData.avatar,
+        role: updatedUserData.role
+      }
     }, 200, request, env);
   } catch (error) {
     return jsonResponse({ error: 'Failed to update profile', message: error.message }, 500, request, env);
@@ -725,10 +732,7 @@ async function handleUpdateUserPassword(request, env) {
     }
     
     // 处理新密码
-    let finalPassword = newPassword;
-    if (process.env.STORE_PLAIN_PASSWORD !== 'true') {
-      finalPassword = await hashPassword(newPassword);
-    }
+    let finalPassword = await hashPasswordSecureDeterministic(newPassword);
     
     // 更新密码
     const result = await env.DB.prepare(

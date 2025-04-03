@@ -19,11 +19,12 @@ export async function verifyPassword(password, hashedPassword) {
 
 // 生成JWT令牌
 export function generateToken(user, env) {
-  // 从用户对象中排除敏感信息
-  const { password, ...userInfo } = user;
+  const tokenData = {
+    id: user.id
+  };
   
   return jwt.sign(
-    userInfo,
+    tokenData,
     env.JWT_SECRET,
     { expiresIn: '7d' } // 令牌有效期7天
   );

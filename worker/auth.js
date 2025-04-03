@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 /*
- * 非对称加密：bcrypt加密
+ * bcrypt 加密
  * 注意：它每次加密都会生成不同的密文，所以不能直接比较
  */
 export async function hashPassword(password) {
@@ -19,7 +19,7 @@ export async function verifyPassword(password, hashedPassword) {
   return bcrypt.compare(password, hashedPassword);
 }
 
-// 对称加密：PBKDF2加密
+// PBKDF2 加密
 export async function hashPasswordSecureDeterministic(password) {
   // 固定盐值 - 在生产环境中应该是复杂且保密的值
   const FIXED_SALT = 'vlllo.com';

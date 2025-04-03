@@ -812,6 +812,33 @@ async function handleDeleteUser(request, env) {
 }
 
 /**
+ * 加密
+ */
+async function handleEncrypt(request, env) {
+  try {
+    // 从URL获取要加密的明文
+    const url = new URL(request.url);
+    const v = url.searchParams.get('v');
+    
+    if (!v) {
+      return jsonResponse({ error: '缺少参数' }, 400, request, env);
+    }
+    
+    // 使用PBKDF2确定性哈希函数对参数进行加密
+    const ciphertext = await hashPasswordSecureDeterministic(v);
+    
+    // 返回加密后的密文
+    return jsonResponse({ 
+      success: true,
+      plaintext: v,
+      ciphertext: ciphertext
+    }, 200, request, env);
+  } catch (error) {
+    return jsonResponse({ error: '加密失败', message: error.message }, 500, request, env);
+  }
+}
+
+/**
  * 主要请求处理函数
  */
 export default {
@@ -830,9 +857,25 @@ export default {
         name: 'PicHub API',
         description: 'Image hosting service API',
         endpoints: {
-          upload: '/upload',
-          images: '/images/{filename}',
-          health: '/health'
+          health: '/health',
+          encrypt: '/api/encrypt',
+          auth: {
+            register: '/api/register',
+            login: '/api/login',
+            user: '/api/user',
+          },
+          admin: {
+            users: '/api/admin/users',
+            activateUser: '/api/admin/users/activate',
+            updatePassword: '/api/admin/users/update-password',
+            deleteUser: '/api/admin/users/delete',
+            files: '/api/admin/files'
+          },
+          files: {
+            upload: '/api/upload',
+            list: '/api/files',
+            delete: '/api/files'
+          }
         }
       }, 200, request, env);
     }
@@ -935,7 +978,7 @@ export default {
     
     // 健康检查端点
     if (path === '/health') {
-      return jsonResponse({ status: 'OK', version: '1.0.0' }, 200, request, env);
+      return jsonResponse({ status: 'OK', version: '1.1.0' }, 200, request, env);
     }
     
     // API路由
@@ -955,6 +998,11 @@ export default {
       
       if (path === '/api/user' && request.method === 'PUT') {
         return handleUpdateUserProfile(request, env);
+      }
+      
+      // 加密
+      if (path === '/api/encrypt' && request.method === 'GET') {
+        return handleEncrypt(request, env);
       }
       
       // 管理员API

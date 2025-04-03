@@ -19,8 +19,11 @@ export async function verifyPassword(password, hashedPassword) {
 
 // 生成JWT令牌
 export function generateToken(user, env) {
+  // 包含必要的用户信息：ID、角色和激活状态
   const tokenData = {
-    id: user.id
+    id: user.id,
+    role: user.role,
+    is_active: user.is_active
   };
   
   return jwt.sign(

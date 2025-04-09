@@ -857,6 +857,7 @@ export default {
         name: 'PicHub API',
         description: 'Image hosting service API',
         endpoints: {
+          images: '/images/{filename}',
           health: '/health',
           encrypt: '/api/encrypt',
           auth: {

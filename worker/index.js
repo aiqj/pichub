@@ -10,6 +10,7 @@
  */
 
 import { generateToken, authenticate, requireAdmin, hashPasswordSecureDeterministic, verifyPasswordSecureDeterministic } from './auth.js';
+import { handleAnalyticsRequest } from './r2Analytics.js';
 
 // 已知文件类型的魔数签名
 const FILE_SIGNATURES = {
@@ -984,6 +985,17 @@ export default {
     
     // API路由
     if (path.startsWith('/api/')) {
+      // 分析API路由
+      if (path === '/api/analytics') {
+        // 添加admin验证
+        const authResult = await authenticate(request, env);
+        if (!authResult.authenticated || !await requireAdmin(authResult.username, env)) {
+          return jsonResponse({ error: 'Unauthorized' }, 401, request, env);
+        }
+        // 传递 env 参数，这样 handleAnalyticsRequest 可以获取配置
+        return handleAnalyticsRequest(request, env);
+      }
+      
       // 认证相关API
       if (path === '/api/register' && request.method === 'POST') {
         return handleRegister(request, env);

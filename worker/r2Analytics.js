@@ -254,10 +254,10 @@ async function handleAnalyticsRequest(request, env) {
   }
 }
 
-// 获取默认的开始日期（30天前）
+// 获取默认的开始日期（当月第一天）
 function getDefaultStartDate() {
   const date = new Date();
-  date.setDate(date.getDate() - 30);
+  date.setDate(1); // 设置为当月第一天
   return date.toISOString().split('T')[0];
 }
 

@@ -97,6 +97,13 @@ export const fileApi = {
   }
 };
 
+// 统计相关API
+export const statsApi = {
+  getR2Stats: () => {
+    return api.get('/api/analytics');
+  },
+};
+
 // 管理员相关API
 export const adminApi = {
   getAllUsers: () => {

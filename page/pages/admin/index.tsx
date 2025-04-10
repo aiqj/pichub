@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import StorageChart from '../../components/StorageChart';
 
 const AdminPage = () => {
   const router = useRouter();
@@ -141,6 +142,9 @@ const AdminPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* 添加存储变化图表 */}
+      <StorageChart />
     </div>
   );
 };

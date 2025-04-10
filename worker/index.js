@@ -987,12 +987,6 @@ export default {
     if (path.startsWith('/api/')) {
       // 分析API路由
       if (path === '/api/analytics') {
-        // 添加admin验证
-        const authResult = await authenticate(request, env);
-        if (!authResult.authenticated || !await requireAdmin(authResult.username, env)) {
-          return jsonResponse({ error: 'Unauthorized' }, 401, request, env);
-        }
-        // 传递 env 参数，这样 handleAnalyticsRequest 可以获取配置
         return handleAnalyticsRequest(request, env);
       }
       

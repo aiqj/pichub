@@ -80,7 +80,7 @@ const AdminPage = () => {
           系统状态
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
             <div className="flex items-center space-x-3">
               <div className="bg-green-900/30 rounded-full p-2">
@@ -105,20 +105,6 @@ const AdminPage = () => {
               <div>
                 <h3 className="text-gray-400 text-sm">活跃用户</h3>
                 <p className="text-indigo-400 font-medium">12</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-purple-900/30 rounded-full p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-gray-400 text-sm">总上传量</h3>
-                <p className="text-purple-400 font-medium">1.2 GB</p>
               </div>
             </div>
           </div>

@@ -22,12 +22,24 @@ interface StorageData {
   };
 }
 
+// 请求数据接口
+interface RequestData {
+  dimensions: {
+    datetime: string;
+  };
+  sum: {
+    requests: number;
+  };
+}
+
 // API响应数据接口
 interface R2StatsResponse {
   data: {
     viewer: {
       accounts: Array<{
         storageStandard: StorageData[];
+        classAOpsStandard: RequestData[];
+        classBOpsStandard: RequestData[];
         [key: string]: any;
       }>;
     };
@@ -50,7 +62,7 @@ type ChartType = 'area' | 'bar' | 'composed';
 const formatBytes = (bytes: number, decimals = 2): string => {
   if (bytes === 0) return '0 Bytes';
   
-  const k = 1000; // R2：统计所使用的存储单位是“字节”，但它采用的换算方式是“十进制”（1000），用于它的存储计费场景。
+  const k = 1000; // R2：统计所使用的存储单位是"字节"，但它采用的换算方式是"十进制"（1000），用于它的存储计费场景。
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   
@@ -117,6 +129,12 @@ const StorageChart: React.FC = () => {
     objectSize: true
   });
   
+  // A类和B类请求总数
+  const [requestCounts, setRequestCounts] = useState({
+    classA: 0,
+    classB: 0
+  });
+  
   // 计算Y轴的域范围，考虑到当前显示的数据系列
   const yAxisDomains = useMemo(() => {
     if (!chartData || chartData.length === 0) {
@@ -159,9 +177,21 @@ const StorageChart: React.FC = () => {
         
         // 获取storageStandard数据
         const storageData: StorageData[] = [];
+        // 获取A类和B类请求数据
+        let classARequests: RequestData[] = [];
+        let classBRequests: RequestData[] = [];
+        
         data.data.viewer.accounts.forEach(account => {
           if (account.storageStandard && Array.isArray(account.storageStandard)) {
             storageData.push(...account.storageStandard);
+          }
+          
+          if (account.classAOpsStandard && Array.isArray(account.classAOpsStandard)) {
+            classARequests.push(...account.classAOpsStandard);
+          }
+          
+          if (account.classBOpsStandard && Array.isArray(account.classBOpsStandard)) {
+            classBRequests.push(...account.classBOpsStandard);
           }
         });
         
@@ -170,6 +200,17 @@ const StorageChart: React.FC = () => {
         }
         
         console.log(`获取到 ${storageData.length} 条存储数据`);
+        
+        // 计算A类和B类请求总数
+        const totalClassARequests = classARequests.reduce((sum, item) => sum + (item.sum.requests || 0), 0);
+        const totalClassBRequests = classBRequests.reduce((sum, item) => sum + (item.sum.requests || 0), 0);
+        
+        setRequestCounts({
+          classA: totalClassARequests,
+          classB: totalClassBRequests
+        });
+        
+        console.log(`A类请求总数: ${totalClassARequests}, B类请求总数: ${totalClassBRequests}`);
         
         // 处理数据：排序并转换为图表数据格式
         const processedData = storageData
@@ -583,18 +624,15 @@ const StorageChart: React.FC = () => {
 
   return (
     <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-xl mt-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
-          存储变化趋势
-        </h2>
-        
-        {stats && (
-          <div className="text-sm text-gray-300 flex flex-wrap gap-4">
-            <span><span style={{ color: COLORS.objectCount }} className="font-semibold">对象数量:</span> {stats.objectCount}</span>
-            <span><span style={{ color: COLORS.objectSize }} className="font-semibold">对象大小:</span> {stats.objectSize}</span>
-            <span><span className="text-gray-400">更新时间:</span> {stats.date}</span>
-          </div>
-        )}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center">
+          <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
+            存储状态
+          </h2>
+          {stats && (
+            <span className="ml-2 text-xs text-gray-400">更新时间: {stats.date}</span>
+          )}
+        </div>
         
         <div className="flex space-x-2">
           <button 
@@ -623,6 +661,120 @@ const StorageChart: React.FC = () => {
           </button>
         </div>
       </div>
+      
+      {/* 新增的统计卡片样式 */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="bg-indigo-900/30 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center">
+                  <h3 className="text-gray-400 text-sm">总文件</h3>
+                  <div className="relative group ml-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      存储在R2中的文件总数
+                    </div>
+                  </div>
+                </div>
+                <p className="text-indigo-400 font-medium">{stats.objectCount}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="bg-pink-900/30 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center">
+                  <h3 className="text-gray-400 text-sm">总存储</h3>
+                  <div className="relative group ml-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      每月10GB免费存储容量，超出部分将收费
+                    </div>
+                  </div>
+                </div>
+                <p className={`font-medium ${
+                  // 使用chartData最后一项的原始字节数值进行比较
+                  chartData.length > 0 ? (
+                    chartData[chartData.length - 1].objectSize < 5 * 1000 * 1000 * 1000 ? '' : 
+                    (chartData[chartData.length - 1].objectSize < 7.5 * 1000 * 1000 * 1000 ? 'text-blue-400' : 
+                    (chartData[chartData.length - 1].objectSize < 10 * 1000 * 1000 * 1000 ? 'text-amber-400' : 'text-red-400'))
+                  ) : ''
+                }`}>
+                  {stats.objectSize}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-900/30 rounded-full p-2 flex items-center justify-center" style={{ width: "32px", height: "32px" }}>
+                <span className="text-blue-400 font-bold">A</span>
+              </div>
+              <div>
+                <div className="flex items-center">
+                  <h3 className="text-gray-400 text-sm">A类</h3>
+                  <div className="relative group ml-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      A类操作主要包括创建和管理存储资源。每月100万次免费
+                    </div>
+                  </div>
+                </div>
+                <p className={`font-medium ${
+                  requestCounts.classA < 500000 ? '' : 
+                  (requestCounts.classA < 750000 ? 'text-blue-400' : 
+                  (requestCounts.classA < 1000000 ? 'text-amber-400' : 'text-red-400'))
+                }`}>{requestCounts.classA}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="bg-purple-900/30 rounded-full p-2 flex items-center justify-center" style={{ width: "32px", height: "32px" }}>
+                <span className="text-purple-400 font-bold">B</span>
+              </div>
+              <div>
+                <div className="flex items-center">
+                  <h3 className="text-gray-400 text-sm">B类</h3>
+                  <div className="relative group ml-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      B类操作主要包括查看和查询存储资源。每月1000万次免费
+                    </div>
+                  </div>
+                </div>
+                <p className={`font-medium ${
+                  requestCounts.classB < 5000000 ? '' : 
+                  (requestCounts.classB < 7500000 ? 'text-blue-400' : 
+                  (requestCounts.classB < 10000000 ? 'text-amber-400' : 'text-red-400'))
+                }`}>{requestCounts.classB}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 h-[400px]">
         <ResponsiveContainer width="100%" height="100%">

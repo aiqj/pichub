@@ -65,32 +65,44 @@ const COLORS = {
   objectSize: '#EC4899'   // 明亮的粉色，与蓝紫色形成鲜明对比
 };
 
-// 自定义Tooltip组件
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    // 使用fullDatetime来显示更完整的时间信息
-    const fullDatetime = payload[0]?.payload?.fullDatetime || label;
-    
-    return (
-      <div className="bg-gray-800 p-4 border border-gray-700 rounded-md shadow-lg">
-        <p className="text-gray-200 font-medium mb-2">{fullDatetime}</p>
-        <div className="space-y-2">
-          <p style={{ color: COLORS.objectCount }} className="flex items-center">
-            <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS.objectCount }}></span>
-            <span className="font-semibold mr-2">对象数量:</span>
-            {payload[0]?.value}
-          </p>
-          <p style={{ color: COLORS.objectSize }} className="flex items-center">
-            <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS.objectSize }}></span>
-            <span className="font-semibold mr-2">对象大小:</span>
-            {formatBytes(payload[1]?.value)}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+// 自定义渲染图例的函数
+const renderCustomizedLegend = (props: any, visibleSeries: any, handleLegendClick: Function) => {
+  const { payload } = props;
+  
+  return (
+    <div className="flex justify-center mb-2 mt-1">
+      {payload.map((entry: any, index: number) => {
+        const isActive = visibleSeries[entry.dataKey];
+        const style = {
+          marginRight: 16,
+          color: isActive ? entry.color : '#999',
+          cursor: 'pointer',
+          display: 'inline-flex',
+          alignItems: 'center'
+        };
+        
+        return (
+          <div 
+            key={`item-${index}`} 
+            style={style}
+            onClick={() => handleLegendClick(entry.dataKey)}
+          >
+            <span 
+              style={{ 
+                display: 'inline-block', 
+                width: 12, 
+                height: 12, 
+                marginRight: 5, 
+                backgroundColor: isActive ? entry.color : '#999', 
+                borderRadius: 2 
+              }} 
+            />
+            <span style={{ fontSize: '0.875rem' }}>{entry.value}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 // 图表组件
@@ -99,8 +111,13 @@ const StorageChart: React.FC = () => {
   const [chartType, setChartType] = useState<ChartType>('area');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // 控制数据系列的显示/隐藏
+  const [visibleSeries, setVisibleSeries] = useState({
+    objectCount: true,
+    objectSize: true
+  });
   
-  // 计算Y轴的域范围
+  // 计算Y轴的域范围，考虑到当前显示的数据系列
   const yAxisDomains = useMemo(() => {
     if (!chartData || chartData.length === 0) {
       return {
@@ -109,18 +126,21 @@ const StorageChart: React.FC = () => {
       };
     }
     
-    // 找出对象数量的最大值，并向上取整为最近的10的倍数
-    const maxObjectCount = Math.max(...chartData.map(item => item.objectCount));
+    // 根据可见性决定是否计算该数据系列的最大值
+    const maxObjectCount = visibleSeries.objectCount 
+      ? Math.max(...chartData.map(item => item.objectCount || 0))
+      : 0;
     const normalizedMaxCount = Math.ceil(maxObjectCount / 10) * 10;
     
-    // 找出对象大小的最大值
-    const maxObjectSize = Math.max(...chartData.map(item => item.objectSize));
+    const maxObjectSize = visibleSeries.objectSize 
+      ? Math.max(...chartData.map(item => item.objectSize || 0))
+      : 0;
     
     return {
-      left: [0, normalizedMaxCount] as [number, number],
-      right: [0, maxObjectSize] as [number, number]
+      left: [0, normalizedMaxCount || 10] as [number, number], // 确保至少有一些高度
+      right: [0, maxObjectSize || 10] as [number, number]      // 确保至少有一些高度
     };
-  }, [chartData]);
+  }, [chartData, visibleSeries]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -219,6 +239,45 @@ const StorageChart: React.FC = () => {
     fetchData();
   }, []);
 
+  // 图例点击事件处理
+  const handleLegendClick = (dataKey: string) => {
+    // 删除限制条件，允许自由点击图例
+    setVisibleSeries(prev => ({
+      ...prev,
+      [dataKey]: !prev[dataKey as keyof typeof prev]
+    }));
+  };
+
+  // 为每种图表类型定制的自定义工具提示组件，显示所有数据系列
+  const CustomizedTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const fullDatetime = payload[0]?.payload?.fullDatetime || label;
+      
+      return (
+        <div className="bg-gray-800 p-4 border border-gray-700 rounded-md shadow-lg">
+          <p className="text-gray-200 font-medium mb-2">{fullDatetime}</p>
+          <div className="space-y-2">
+            {payload.find(p => p.dataKey === 'objectCount') && (
+              <p style={{ color: visibleSeries.objectCount ? COLORS.objectCount : '#999' }} className="flex items-center">
+                <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: visibleSeries.objectCount ? COLORS.objectCount : '#999' }}></span>
+                <span className="font-semibold mr-2">对象数量:</span>
+                {payload.find(p => p.dataKey === 'objectCount')?.value || '无数据'}
+              </p>
+            )}
+            {payload.find(p => p.dataKey === 'objectSize') && (
+              <p style={{ color: visibleSeries.objectSize ? COLORS.objectSize : '#999' }} className="flex items-center">
+                <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: visibleSeries.objectSize ? COLORS.objectSize : '#999' }}></span>
+                <span className="font-semibold mr-2">对象大小:</span>
+                {formatBytes(payload.find(p => p.dataKey === 'objectSize')?.value || 0)}
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   // 渲染图表
   const renderChart = () => {
     // 如果数据正在加载，显示加载状态
@@ -256,22 +315,22 @@ const StorageChart: React.FC = () => {
       vertical: false  // 只显示水平网格线
     };
     
-    // 所有坐标轴通用的配置
+    // 坐标轴配置
     const axisProps = {
       xAxis: <XAxis 
         dataKey="datetime" 
         tick={{ fill: '#9CA3AF' }} 
         axisLine={{ stroke: '#4B5563' }}
-        minTickGap={30}
-        interval="preserveStartEnd"
+        minTickGap={10}  // 减小最小刻度间隔，允许更多标签显示
+        interval={0}     // 强制显示所有刻度，而不是"preserveStartEnd"
         tickLine={true}
         padding={{ left: 10, right: 10 }}
       />,
       leftYAxis: <YAxis 
         yAxisId="left" 
         tick={{ fill: '#9CA3AF' }} 
-        axisLine={{ stroke: COLORS.objectCount }}
-        tickLine={{ stroke: COLORS.objectCount }}
+        axisLine={{ stroke: visibleSeries.objectCount ? COLORS.objectCount : '#999' }}
+        tickLine={{ stroke: visibleSeries.objectCount ? COLORS.objectCount : '#999' }}
         width={60}
         domain={yAxisDomains.left}
         allowDecimals={false}
@@ -280,7 +339,7 @@ const StorageChart: React.FC = () => {
           angle: -90, 
           position: 'insideLeft', 
           offset: -5, 
-          fill: COLORS.objectCount, 
+          fill: visibleSeries.objectCount ? COLORS.objectCount : '#999', 
           style: { textAnchor: 'middle' } 
         }}
       />,
@@ -288,8 +347,8 @@ const StorageChart: React.FC = () => {
         yAxisId="right" 
         orientation="right" 
         tick={{ fill: '#9CA3AF' }} 
-        axisLine={{ stroke: COLORS.objectSize }}
-        tickLine={{ stroke: COLORS.objectSize }}
+        axisLine={{ stroke: visibleSeries.objectSize ? COLORS.objectSize : '#999' }}
+        tickLine={{ stroke: visibleSeries.objectSize ? COLORS.objectSize : '#999' }}
         width={80}
         tickFormatter={(value) => formatBytes(value, 0)}
         domain={yAxisDomains.right}
@@ -298,18 +357,16 @@ const StorageChart: React.FC = () => {
           angle: 90, 
           position: 'insideRight', 
           offset: -5, 
-          fill: COLORS.objectSize, 
+          fill: visibleSeries.objectSize ? COLORS.objectSize : '#999', 
           style: { textAnchor: 'middle' } 
         }}
       />
     };
     
-    // 图例配置
+    // 自定义图例
     const legendProps = {
-      verticalAlign: "top" as const,
-      align: "center" as const,
-      height: 36,
-      wrapperStyle: { color: '#D1D5DB', paddingBottom: '10px' }
+      content: (props: any) => renderCustomizedLegend(props, visibleSeries, handleLegendClick),
+      height: 36
     };
     
     switch (chartType) {
@@ -320,7 +377,7 @@ const StorageChart: React.FC = () => {
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomizedTooltip />} />
             <Legend {...legendProps} />
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
@@ -337,24 +394,28 @@ const StorageChart: React.FC = () => {
               type="monotone" 
               dataKey="objectCount" 
               name="对象数量" 
-              stroke={COLORS.objectCount}
+              stroke={visibleSeries.objectCount ? COLORS.objectCount : "#999"}
               strokeWidth={2}
+              fillOpacity={visibleSeries.objectCount ? 1 : 0}
               fill="url(#colorCount)" 
               isAnimationActive={chartData.length < 500}
               dot={chartData.length < 30 ? { fill: COLORS.objectCount, strokeWidth: 2, r: 3 } : false}
               activeDot={{ r: 6, fill: COLORS.objectCount }}
+              hide={!visibleSeries.objectCount}
             />
             <Area 
               yAxisId="right"
               type="monotone" 
               dataKey="objectSize" 
               name="对象大小" 
-              stroke={COLORS.objectSize}
+              stroke={visibleSeries.objectSize ? COLORS.objectSize : "#999"}
               strokeWidth={2}
+              fillOpacity={visibleSeries.objectSize ? 1 : 0}
               fill="url(#colorSize)" 
               isAnimationActive={chartData.length < 500}
               dot={chartData.length < 30 ? { fill: COLORS.objectSize, strokeWidth: 2, r: 3 } : false}
               activeDot={{ r: 6, fill: COLORS.objectSize }}
+              hide={!visibleSeries.objectSize}
             />
           </AreaChart>
         );
@@ -366,25 +427,29 @@ const StorageChart: React.FC = () => {
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomizedTooltip />} />
             <Legend {...legendProps} />
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 
               name="对象数量" 
-              fill={COLORS.objectCount}
+              fill={visibleSeries.objectCount ? COLORS.objectCount : "#999"}
+              fillOpacity={visibleSeries.objectCount ? 1 : 0}
               isAnimationActive={chartData.length < 500}
               radius={[4, 4, 0, 0]}
               maxBarSize={20}
+              hide={!visibleSeries.objectCount}
             />
             <Bar 
               yAxisId="right"
               dataKey="objectSize" 
               name="对象大小" 
-              fill={COLORS.objectSize}
+              fill={visibleSeries.objectSize ? COLORS.objectSize : "#999"}
+              fillOpacity={visibleSeries.objectSize ? 1 : 0}
               isAnimationActive={chartData.length < 500}
               radius={[4, 4, 0, 0]}
               maxBarSize={20}
+              hide={!visibleSeries.objectSize}
             />
           </BarChart>
         );
@@ -396,27 +461,31 @@ const StorageChart: React.FC = () => {
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomizedTooltip />} />
             <Legend {...legendProps} />
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 
               name="对象数量" 
-              fill={COLORS.objectCount}
+              fill={visibleSeries.objectCount ? COLORS.objectCount : "#999"}
+              fillOpacity={visibleSeries.objectCount ? 1 : 0}
               isAnimationActive={chartData.length < 500}
               radius={[4, 4, 0, 0]}
               maxBarSize={20}
+              hide={!visibleSeries.objectCount}
             />
             <Line 
               yAxisId="right"
               type="monotone" 
               dataKey="objectSize" 
               name="对象大小" 
-              stroke={COLORS.objectSize}
+              stroke={visibleSeries.objectSize ? COLORS.objectSize : "#999"}
+              strokeOpacity={visibleSeries.objectSize ? 1 : 0}
               strokeWidth={2}
               dot={chartData.length < 30 ? { stroke: COLORS.objectSize, strokeWidth: 2, r: 3 } : false}
               activeDot={{ r: 6 }}
               isAnimationActive={chartData.length < 500}
+              hide={!visibleSeries.objectSize}
             />
           </ComposedChart>
         );

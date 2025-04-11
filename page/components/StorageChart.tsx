@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line } from 'recharts';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -40,10 +40,11 @@ interface ChartData {
   datetime: string;
   fullDatetime: string;
   objectCount: number;
-  totalSize: number; // metadataSize + payloadSize
-  metadataSize: number;
-  payloadSize: number;
+  objectSize: number; // 重命名为对象大小 (metadataSize + payloadSize)
 }
+
+// 图表类型
+type ChartType = 'area' | 'bar' | 'composed';
 
 // 格式化工具函数
 const formatBytes = (bytes: number, decimals = 2): string => {
@@ -71,17 +72,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           <span className="font-semibold">对象数量: </span>
           {payload[0]?.value}
         </p>
-        <p className="text-green-400">
-          <span className="font-semibold">元数据: </span>
-          {formatBytes(payload[1]?.value)}
-        </p>
-        <p className="text-cyan-400">
-          <span className="font-semibold">有效载荷: </span>
-          {formatBytes(payload[2]?.value)}
-        </p>
         <p className="text-purple-400">
-          <span className="font-semibold">总大小: </span>
-          {formatBytes(payload[3]?.value)}
+          <span className="font-semibold">对象大小: </span>
+          {formatBytes(payload[1]?.value)}
         </p>
       </div>
     );
@@ -93,7 +86,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 // 图表组件
 const StorageChart: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [chartType, setChartType] = useState<'area' | 'bar' | 'line'>('area');
+  const [chartType, setChartType] = useState<ChartType>('area');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -140,9 +133,8 @@ const StorageChart: React.FC = () => {
               // 保存原始时间戳用于排序和找出最新记录
               timestamp: beijingTime.valueOf(),
               objectCount: item.max.objectCount,
-              metadataSize: item.max.metadataSize,
-              payloadSize: item.max.payloadSize,
-              totalSize: item.max.metadataSize + item.max.payloadSize,
+              // 只保留对象大小，不再分开显示metadataSize和payloadSize
+              objectSize: item.max.metadataSize + item.max.payloadSize,
               originalDatetime: item.dimensions.datetime, // 保存原始日期用于排序
             };
           })
@@ -172,17 +164,15 @@ const StorageChart: React.FC = () => {
               datetime: latestItem.datetime,
               fullDatetime: latestItem.fullDatetime,
               objectCount: latestItem.objectCount,
-              metadataSize: latestItem.metadataSize,
-              payloadSize: latestItem.payloadSize,
-              totalSize: latestItem.totalSize,
+              objectSize: latestItem.objectSize,
             };
           }).sort((a, b) => dayjs(a.fullDatetime, 'MM-DD HH:mm').valueOf() - dayjs(b.fullDatetime, 'MM-DD HH:mm').valueOf());
           
           setChartData(aggregatedData);
         } else {
           // 数据量不多，直接使用处理后的数据
-          setChartData(processedData.map(({ datetime, fullDatetime, objectCount, metadataSize, payloadSize, totalSize }) => 
-            ({ datetime, fullDatetime, objectCount, metadataSize, payloadSize, totalSize })
+          setChartData(processedData.map(({ datetime, fullDatetime, objectCount, objectSize }) => 
+            ({ datetime, fullDatetime, objectCount, objectSize })
           ));
         }
       } catch (err) {
@@ -221,33 +211,45 @@ const StorageChart: React.FC = () => {
       );
     }
     
+    // 所有图表通用的配置
+    const commonProps = {
+      data: chartData,
+      margin: { top: 10, right: 30, left: 0, bottom: 0 }
+    };
+    
+    // 所有坐标轴通用的配置
+    const axisProps = {
+      xAxis: <XAxis 
+        dataKey="datetime" 
+        tick={{ fill: '#9CA3AF' }} 
+        axisLine={{ stroke: '#4B5563' }}
+        minTickGap={30}
+        interval="preserveStartEnd"
+      />,
+      leftYAxis: <YAxis 
+        yAxisId="left" 
+        tick={{ fill: '#9CA3AF' }} 
+        axisLine={{ stroke: '#4B5563' }}
+        width={80}
+      />,
+      rightYAxis: <YAxis 
+        yAxisId="right" 
+        orientation="right" 
+        tick={{ fill: '#9CA3AF' }} 
+        axisLine={{ stroke: '#4B5563' }}
+        width={70}
+        tickFormatter={(value) => formatBytes(value, 0)}
+      />
+    };
+    
     switch (chartType) {
       case 'area':
         return (
-          <AreaChart data={chartData}>
+          <AreaChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="datetime" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              minTickGap={30}  // 增加间隔，减少拥挤
-              interval="preserveStartEnd" // 保证开始和结束的标签显示
-              tickFormatter={(value) => value} // 可以自定义格式化函数
-            />
-            <YAxis 
-              yAxisId="left" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={80}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={70}
-              tickFormatter={(value) => formatBytes(value, 0)}
-            />
+            {axisProps.xAxis}
+            {axisProps.leftYAxis}
+            {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ color: '#D1D5DB' }} />
             <Area 
@@ -263,28 +265,8 @@ const StorageChart: React.FC = () => {
             <Area 
               yAxisId="right"
               type="monotone" 
-              dataKey="metadataSize" 
-              name="元数据大小" 
-              stroke="#10B981" 
-              fill="#10B981" 
-              fillOpacity={0.3} 
-              isAnimationActive={chartData.length < 500}
-            />
-            <Area 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="payloadSize" 
-              name="有效载荷" 
-              stroke="#06B6D4" 
-              fill="#06B6D4" 
-              fillOpacity={0.3} 
-              isAnimationActive={chartData.length < 500}
-            />
-            <Area 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="totalSize" 
-              name="总大小" 
+              dataKey="objectSize" 
+              name="对象大小" 
               stroke="#A855F7" 
               fill="#A855F7" 
               fillOpacity={0.3} 
@@ -295,29 +277,11 @@ const StorageChart: React.FC = () => {
       
       case 'bar':
         return (
-          <BarChart data={chartData}>
+          <BarChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="datetime" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              minTickGap={30}
-              interval="preserveStartEnd"
-            />
-            <YAxis 
-              yAxisId="left" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={80}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={70}
-              tickFormatter={(value) => formatBytes(value, 0)}
-            />
+            {axisProps.xAxis}
+            {axisProps.leftYAxis}
+            {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ color: '#D1D5DB' }} />
             <Bar 
@@ -329,96 +293,41 @@ const StorageChart: React.FC = () => {
             />
             <Bar 
               yAxisId="right"
-              dataKey="metadataSize" 
-              name="元数据大小" 
-              fill="#10B981" 
-              isAnimationActive={chartData.length < 500}
-            />
-            <Bar 
-              yAxisId="right"
-              dataKey="payloadSize" 
-              name="有效载荷" 
-              fill="#06B6D4" 
-              isAnimationActive={chartData.length < 500}
-            />
-            <Bar 
-              yAxisId="right"
-              dataKey="totalSize" 
-              name="总大小" 
+              dataKey="objectSize" 
+              name="对象大小" 
               fill="#A855F7" 
               isAnimationActive={chartData.length < 500}
             />
           </BarChart>
         );
       
-      case 'line':
+      case 'composed':
         return (
-          <LineChart data={chartData}>
+          <ComposedChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="datetime" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              minTickGap={30}
-              interval="preserveStartEnd"
-            />
-            <YAxis 
-              yAxisId="left" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={80}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              tick={{ fill: '#9CA3AF' }} 
-              axisLine={{ stroke: '#4B5563' }}
-              width={70}
-              tickFormatter={(value) => formatBytes(value, 0)}
-            />
+            {axisProps.xAxis}
+            {axisProps.leftYAxis}
+            {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ color: '#D1D5DB' }} />
-            <Line 
+            <Bar 
               yAxisId="left"
-              type="monotone" 
               dataKey="objectCount" 
               name="对象数量" 
-              stroke="#818CF8" 
-              dot={chartData.length < 100 ? { stroke: '#818CF8', strokeWidth: 2, r: 2 } : false}
-              activeDot={{ r: 6 }}
+              fill="#818CF8" 
               isAnimationActive={chartData.length < 500}
             />
             <Line 
               yAxisId="right"
               type="monotone" 
-              dataKey="metadataSize" 
-              name="元数据大小" 
-              stroke="#10B981" 
-              dot={chartData.length < 100 ? { stroke: '#10B981', strokeWidth: 2, r: 2 } : false}
-              activeDot={{ r: 6 }}
-              isAnimationActive={chartData.length < 500}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="payloadSize" 
-              name="有效载荷" 
-              stroke="#06B6D4" 
-              dot={chartData.length < 100 ? { stroke: '#06B6D4', strokeWidth: 2, r: 2 } : false}
-              activeDot={{ r: 6 }}
-              isAnimationActive={chartData.length < 500}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey="totalSize" 
-              name="总大小" 
+              dataKey="objectSize" 
+              name="对象大小" 
               stroke="#A855F7" 
               dot={chartData.length < 100 ? { stroke: '#A855F7', strokeWidth: 2, r: 2 } : false}
               activeDot={{ r: 6 }}
               isAnimationActive={chartData.length < 500}
             />
-          </LineChart>
+          </ComposedChart>
         );
         
       default:
@@ -432,7 +341,7 @@ const StorageChart: React.FC = () => {
     
     const lastItem = chartData[chartData.length - 1];
     return {
-      totalSize: formatBytes(lastItem.totalSize),
+      objectSize: formatBytes(lastItem.objectSize),
       objectCount: lastItem.objectCount,
       date: lastItem.fullDatetime
     };
@@ -450,7 +359,7 @@ const StorageChart: React.FC = () => {
         {stats && (
           <div className="text-sm text-gray-300 flex flex-wrap gap-4">
             <span><span className="text-indigo-400 font-semibold">对象数量:</span> {stats.objectCount}</span>
-            <span><span className="text-purple-400 font-semibold">总存储:</span> {stats.totalSize}</span>
+            <span><span className="text-purple-400 font-semibold">对象大小:</span> {stats.objectSize}</span>
             <span><span className="text-gray-400">更新时间:</span> {stats.date}</span>
           </div>
         )}
@@ -473,12 +382,12 @@ const StorageChart: React.FC = () => {
             柱状图
           </button>
           <button 
-            onClick={() => setChartType('line')}
-            className={`px-3 py-1 rounded-md ${chartType === 'line' 
+            onClick={() => setChartType('composed')}
+            className={`px-3 py-1 rounded-md ${chartType === 'composed' 
               ? 'bg-indigo-600 text-white' 
               : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
           >
-            折线图
+            组合图
           </button>
         </div>
       </div>
@@ -491,7 +400,7 @@ const StorageChart: React.FC = () => {
       
       <div className="mt-3 text-sm text-gray-400">
         <p>* 图表显示存储变化趋势，按北京时间（GMT+8）排序</p>
-        <p>* 总大小 = 元数据大小 + 有效载荷大小</p>
+        <p>* 对象大小 = 元数据大小 + 有效载荷大小</p>
         {!loading && error && (
           <p className="text-red-400">* 错误: {error}</p>
         )}

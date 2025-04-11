@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line, ReferenceLine, ReferenceArea } from 'recharts';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -70,7 +70,7 @@ const renderCustomizedLegend = (props: any, visibleSeries: any, handleLegendClic
   const { payload } = props;
   
   return (
-    <div className="flex justify-center mb-2 mt-1">
+    <div className="flex justify-center mb-4">
       {payload.map((entry: any, index: number) => {
         const isActive = visibleSeries[entry.dataKey];
         const style = {
@@ -249,7 +249,7 @@ const StorageChart: React.FC = () => {
   };
 
   // 为每种图表类型定制的自定义工具提示组件，显示所有数据系列
-  const CustomizedTooltip = ({ active, payload, label }: any) => {
+  const CustomizedTooltip = ({ active, payload, label, coordinate }: any) => {
     if (active && payload && payload.length) {
       const fullDatetime = payload[0]?.payload?.fullDatetime || label;
       
@@ -276,6 +276,21 @@ const StorageChart: React.FC = () => {
       );
     }
     return null;
+  };
+
+  // 横向和纵向参考线
+  const [activeTooltipIndex, setActiveTooltipIndex] = useState<number | null>(null);
+  
+  // 处理鼠标悬停事件的函数
+  const handleMouseMove = (state: any) => {
+    if (state && state.activeTooltipIndex !== undefined) {
+      setActiveTooltipIndex(state.activeTooltipIndex);
+    }
+  };
+
+  // 处理鼠标离开事件的函数
+  const handleMouseLeave = () => {
+    setActiveTooltipIndex(null);
   };
 
   // 渲染图表
@@ -305,7 +320,9 @@ const StorageChart: React.FC = () => {
     // 所有图表通用的配置
     const commonProps = {
       data: chartData,
-      margin: { top: 20, right: 30, left: 10, bottom: 10 }
+      margin: { top: 20, right: 30, left: 10, bottom: 10 },
+      onMouseMove: handleMouseMove,
+      onMouseLeave: handleMouseLeave
     };
     
     // 图表的网格线配置
@@ -366,7 +383,47 @@ const StorageChart: React.FC = () => {
     // 自定义图例
     const legendProps = {
       content: (props: any) => renderCustomizedLegend(props, visibleSeries, handleLegendClick),
+      verticalAlign: 'top' as const,
+      align: 'center' as const,
       height: 36
+    };
+
+    // 水平参考线
+    const getReferenceLines = () => {
+      if (activeTooltipIndex === null || !chartData[activeTooltipIndex]) return null;
+      
+      const dataPoint = chartData[activeTooltipIndex];
+      const lines = [];
+      
+      if (visibleSeries.objectCount) {
+        lines.push(
+          <ReferenceLine 
+            key="refLineLeft" 
+            y={dataPoint.objectCount} 
+            yAxisId="left" 
+            stroke={COLORS.objectCount} 
+            strokeDasharray="3 3" 
+            strokeWidth={1} 
+            ifOverflow="extendDomain" 
+          />
+        );
+      }
+      
+      if (visibleSeries.objectSize) {
+        lines.push(
+          <ReferenceLine 
+            key="refLineRight" 
+            y={dataPoint.objectSize} 
+            yAxisId="right" 
+            stroke={COLORS.objectSize} 
+            strokeDasharray="3 3" 
+            strokeWidth={1} 
+            ifOverflow="extendDomain" 
+          />
+        );
+      }
+      
+      return lines;
     };
     
     switch (chartType) {
@@ -374,11 +431,16 @@ const StorageChart: React.FC = () => {
         return (
           <AreaChart {...commonProps}>
             <CartesianGrid {...gridProps} />
+            <Legend {...legendProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomizedTooltip />} />
-            <Legend {...legendProps} />
+            <Tooltip 
+              content={<CustomizedTooltip />} 
+              cursor={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '5 5' }}
+              isAnimationActive={false}
+            />
+            {getReferenceLines()}
             <defs>
               <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={COLORS.objectCount} stopOpacity={0.8}/>
@@ -424,11 +486,16 @@ const StorageChart: React.FC = () => {
         return (
           <BarChart {...commonProps} barGap={10}>
             <CartesianGrid {...gridProps} />
+            <Legend {...legendProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomizedTooltip />} />
-            <Legend {...legendProps} />
+            <Tooltip 
+              content={<CustomizedTooltip />} 
+              cursor={{ fill: 'rgba(120, 120, 120, 0.2)', stroke: '#666', strokeWidth: 1, strokeDasharray: '5 5' }}
+              isAnimationActive={false}
+            />
+            {getReferenceLines()}
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 
@@ -458,11 +525,16 @@ const StorageChart: React.FC = () => {
         return (
           <ComposedChart {...commonProps}>
             <CartesianGrid {...gridProps} />
+            <Legend {...legendProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
-            <Tooltip content={<CustomizedTooltip />} />
-            <Legend {...legendProps} />
+            <Tooltip 
+              content={<CustomizedTooltip />} 
+              cursor={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '5 5' }}
+              isAnimationActive={false}
+            />
+            {getReferenceLines()}
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 

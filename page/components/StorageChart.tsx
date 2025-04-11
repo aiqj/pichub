@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line } from 'recharts';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line, ReferenceLine } from 'recharts';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -59,6 +59,12 @@ const formatBytes = (bytes: number, decimals = 2): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
+// 颜色常量定义
+const COLORS = {
+  objectCount: '#6366F1', // 较鲜明的蓝紫色
+  objectSize: '#EC4899'   // 明亮的粉色，与蓝紫色形成鲜明对比
+};
+
 // 自定义Tooltip组件
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -66,16 +72,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const fullDatetime = payload[0]?.payload?.fullDatetime || label;
     
     return (
-      <div className="bg-gray-800 p-3 border border-gray-700 rounded-md shadow-lg">
-        <p className="text-gray-200 mb-1">{fullDatetime}</p>
-        <p className="text-indigo-400">
-          <span className="font-semibold">对象数量: </span>
-          {payload[0]?.value}
-        </p>
-        <p className="text-purple-400">
-          <span className="font-semibold">对象大小: </span>
-          {formatBytes(payload[1]?.value)}
-        </p>
+      <div className="bg-gray-800 p-4 border border-gray-700 rounded-md shadow-lg">
+        <p className="text-gray-200 font-medium mb-2">{fullDatetime}</p>
+        <div className="space-y-2">
+          <p style={{ color: COLORS.objectCount }} className="flex items-center">
+            <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS.objectCount }}></span>
+            <span className="font-semibold mr-2">对象数量:</span>
+            {payload[0]?.value}
+          </p>
+          <p style={{ color: COLORS.objectSize }} className="flex items-center">
+            <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS.objectSize }}></span>
+            <span className="font-semibold mr-2">对象大小:</span>
+            {formatBytes(payload[1]?.value)}
+          </p>
+        </div>
       </div>
     );
   }
@@ -89,6 +99,28 @@ const StorageChart: React.FC = () => {
   const [chartType, setChartType] = useState<ChartType>('area');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 计算Y轴的域范围
+  const yAxisDomains = useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return {
+        left: [0, 'auto'] as [number, string],
+        right: [0, 'auto'] as [number, string]
+      };
+    }
+    
+    // 找出对象数量的最大值，并向上取整为最近的10的倍数
+    const maxObjectCount = Math.max(...chartData.map(item => item.objectCount));
+    const normalizedMaxCount = Math.ceil(maxObjectCount / 10) * 10;
+    
+    // 找出对象大小的最大值
+    const maxObjectSize = Math.max(...chartData.map(item => item.objectSize));
+    
+    return {
+      left: [0, normalizedMaxCount] as [number, number],
+      right: [0, maxObjectSize] as [number, number]
+    };
+  }, [chartData]);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -187,7 +219,7 @@ const StorageChart: React.FC = () => {
     fetchData();
   }, []);
 
-  // 根据选择的图表类型渲染不同的图表
+  // 渲染图表
   const renderChart = () => {
     // 如果数据正在加载，显示加载状态
     if (loading) {
@@ -214,7 +246,14 @@ const StorageChart: React.FC = () => {
     // 所有图表通用的配置
     const commonProps = {
       data: chartData,
-      margin: { top: 10, right: 30, left: 0, bottom: 0 }
+      margin: { top: 20, right: 30, left: 10, bottom: 10 }
+    };
+    
+    // 图表的网格线配置
+    const gridProps = {
+      strokeDasharray: "3 3",
+      stroke: "#374151",
+      vertical: false  // 只显示水平网格线
     };
     
     // 所有坐标轴通用的配置
@@ -225,78 +264,127 @@ const StorageChart: React.FC = () => {
         axisLine={{ stroke: '#4B5563' }}
         minTickGap={30}
         interval="preserveStartEnd"
+        tickLine={true}
+        padding={{ left: 10, right: 10 }}
       />,
       leftYAxis: <YAxis 
         yAxisId="left" 
         tick={{ fill: '#9CA3AF' }} 
-        axisLine={{ stroke: '#4B5563' }}
-        width={80}
+        axisLine={{ stroke: COLORS.objectCount }}
+        tickLine={{ stroke: COLORS.objectCount }}
+        width={60}
+        domain={yAxisDomains.left}
+        allowDecimals={false}
+        label={{ 
+          value: '对象数量', 
+          angle: -90, 
+          position: 'insideLeft', 
+          offset: -5, 
+          fill: COLORS.objectCount, 
+          style: { textAnchor: 'middle' } 
+        }}
       />,
       rightYAxis: <YAxis 
         yAxisId="right" 
         orientation="right" 
         tick={{ fill: '#9CA3AF' }} 
-        axisLine={{ stroke: '#4B5563' }}
-        width={70}
+        axisLine={{ stroke: COLORS.objectSize }}
+        tickLine={{ stroke: COLORS.objectSize }}
+        width={80}
         tickFormatter={(value) => formatBytes(value, 0)}
+        domain={yAxisDomains.right}
+        label={{ 
+          value: '对象大小', 
+          angle: 90, 
+          position: 'insideRight', 
+          offset: -5, 
+          fill: COLORS.objectSize, 
+          style: { textAnchor: 'middle' } 
+        }}
       />
+    };
+    
+    // 图例配置
+    const legendProps = {
+      verticalAlign: "top" as const,
+      align: "center" as const,
+      height: 36,
+      wrapperStyle: { color: '#D1D5DB', paddingBottom: '10px' }
     };
     
     switch (chartType) {
       case 'area':
         return (
           <AreaChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid {...gridProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ color: '#D1D5DB' }} />
+            <Legend {...legendProps} />
+            <defs>
+              <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={COLORS.objectCount} stopOpacity={0.8}/>
+                <stop offset="95%" stopColor={COLORS.objectCount} stopOpacity={0.2}/>
+              </linearGradient>
+              <linearGradient id="colorSize" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={COLORS.objectSize} stopOpacity={0.8}/>
+                <stop offset="95%" stopColor={COLORS.objectSize} stopOpacity={0.2}/>
+              </linearGradient>
+            </defs>
             <Area 
               yAxisId="left"
               type="monotone" 
               dataKey="objectCount" 
               name="对象数量" 
-              stroke="#818CF8" 
-              fill="#818CF8" 
-              fillOpacity={0.3} 
+              stroke={COLORS.objectCount}
+              strokeWidth={2}
+              fill="url(#colorCount)" 
               isAnimationActive={chartData.length < 500}
+              dot={chartData.length < 30 ? { fill: COLORS.objectCount, strokeWidth: 2, r: 3 } : false}
+              activeDot={{ r: 6, fill: COLORS.objectCount }}
             />
             <Area 
               yAxisId="right"
               type="monotone" 
               dataKey="objectSize" 
               name="对象大小" 
-              stroke="#A855F7" 
-              fill="#A855F7" 
-              fillOpacity={0.3} 
+              stroke={COLORS.objectSize}
+              strokeWidth={2}
+              fill="url(#colorSize)" 
               isAnimationActive={chartData.length < 500}
+              dot={chartData.length < 30 ? { fill: COLORS.objectSize, strokeWidth: 2, r: 3 } : false}
+              activeDot={{ r: 6, fill: COLORS.objectSize }}
             />
           </AreaChart>
         );
       
       case 'bar':
         return (
-          <BarChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <BarChart {...commonProps} barGap={10}>
+            <CartesianGrid {...gridProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ color: '#D1D5DB' }} />
+            <Legend {...legendProps} />
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 
               name="对象数量" 
-              fill="#818CF8" 
+              fill={COLORS.objectCount}
               isAnimationActive={chartData.length < 500}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={20}
             />
             <Bar 
               yAxisId="right"
               dataKey="objectSize" 
               name="对象大小" 
-              fill="#A855F7" 
+              fill={COLORS.objectSize}
               isAnimationActive={chartData.length < 500}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={20}
             />
           </BarChart>
         );
@@ -304,26 +392,29 @@ const StorageChart: React.FC = () => {
       case 'composed':
         return (
           <ComposedChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid {...gridProps} />
             {axisProps.xAxis}
             {axisProps.leftYAxis}
             {axisProps.rightYAxis}
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ color: '#D1D5DB' }} />
+            <Legend {...legendProps} />
             <Bar 
               yAxisId="left"
               dataKey="objectCount" 
               name="对象数量" 
-              fill="#818CF8" 
+              fill={COLORS.objectCount}
               isAnimationActive={chartData.length < 500}
+              radius={[4, 4, 0, 0]}
+              maxBarSize={20}
             />
             <Line 
               yAxisId="right"
               type="monotone" 
               dataKey="objectSize" 
               name="对象大小" 
-              stroke="#A855F7" 
-              dot={chartData.length < 100 ? { stroke: '#A855F7', strokeWidth: 2, r: 2 } : false}
+              stroke={COLORS.objectSize}
+              strokeWidth={2}
+              dot={chartData.length < 30 ? { stroke: COLORS.objectSize, strokeWidth: 2, r: 3 } : false}
               activeDot={{ r: 6 }}
               isAnimationActive={chartData.length < 500}
             />
@@ -351,15 +442,15 @@ const StorageChart: React.FC = () => {
 
   return (
     <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-xl mt-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
           存储变化趋势
         </h2>
         
         {stats && (
           <div className="text-sm text-gray-300 flex flex-wrap gap-4">
-            <span><span className="text-indigo-400 font-semibold">对象数量:</span> {stats.objectCount}</span>
-            <span><span className="text-purple-400 font-semibold">对象大小:</span> {stats.objectSize}</span>
+            <span><span style={{ color: COLORS.objectCount }} className="font-semibold">对象数量:</span> {stats.objectCount}</span>
+            <span><span style={{ color: COLORS.objectSize }} className="font-semibold">对象大小:</span> {stats.objectSize}</span>
             <span><span className="text-gray-400">更新时间:</span> {stats.date}</span>
           </div>
         )}
@@ -392,13 +483,13 @@ const StorageChart: React.FC = () => {
         </div>
       </div>
       
-      <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 h-96">
+      <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 h-[400px]">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>
       </div>
       
-      <div className="mt-3 text-sm text-gray-400">
+      <div className="mt-3 text-sm text-gray-400 hidden">
         <p>* 图表显示存储变化趋势，按北京时间（GMT+8）排序</p>
         <p>* 对象大小 = 元数据大小 + 有效载荷大小</p>
         {!loading && error && (

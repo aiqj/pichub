@@ -50,7 +50,7 @@ type ChartType = 'area' | 'bar' | 'composed';
 const formatBytes = (bytes: number, decimals = 2): string => {
   if (bytes === 0) return '0 Bytes';
   
-  const k = 1024;
+  const k = 1000; // R2：统计所使用的存储单位是“字节”，但它采用的换算方式是“十进制”（1000），用于它的存储计费场景。
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   

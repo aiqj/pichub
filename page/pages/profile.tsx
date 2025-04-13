@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { authApi } from '../utils/api';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 
 const ProfilePage = () => {
   const { user, updateUserData } = useAuth();
@@ -185,8 +187,6 @@ const ProfilePage = () => {
         toast.error(response.data?.message || '更新失败，请重试');
       }
     } catch (error: any) {
-      console.error('更新个人资料失败:', error);
-      
       // 根据错误类型显示适当的错误信息
       if (error.response?.data?.message) {
         if (error.response.data.message.includes('password')) {
@@ -208,7 +208,6 @@ const ProfilePage = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} />
       <div className="flex justify-center py-8">
         <div className="w-full max-w-5xl px-4">
           <h1 className="hidden text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-8">个人资料</h1>

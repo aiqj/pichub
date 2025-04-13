@@ -16,7 +16,6 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [notifications, setNotifications] = useState<Array<{id: string, message: string, type: NotificationType}>>([]);
-  const [debugInfo, setDebugInfo] = useState<string>('');
   const router = useRouter();
   const { login, isAuthenticated } = useAuth();
   
@@ -37,38 +36,13 @@ export default function Login() {
     };
   }, [notifications]);
   
-  // 加载时检查认证状态并设置调试信息
+  // 加载时检查认证状态
   useEffect(() => {
     // 如果已登录，重定向到首页
     if (isAuthenticated && typeof window !== 'undefined') {
       router.push('/');
     }
-    
-    // 设置调试信息
-    const info = `
-      API端点: ${apiEndpoint}
-      是否已认证: ${isAuthenticated}
-      本地Token: ${typeof window !== 'undefined' ? localStorage.getItem('token') ? '存在' : '不存在' : 'SSR模式'}
-      本地User数据: ${typeof window !== 'undefined' ? localStorage.getItem('user') ? '存在' : '不存在' : 'SSR模式'}
-      环境: ${process.env.NODE_ENV}
-    `;
-    setDebugInfo(info);
-    
-    console.log('============ 登录页调试信息 ============');
-    console.log('API端点:', apiEndpoint);
-    console.log('是否已认证:', isAuthenticated);
-    if (typeof window !== 'undefined') {
-      console.log('本地Token:', localStorage.getItem('token'));
-      try {
-        const savedUser = localStorage.getItem('user');
-        console.log('本地User数据:', savedUser ? JSON.parse(savedUser) : null);
-      } catch (e) {
-        console.error('解析用户数据失败:', e);
-      }
-    }
-    console.log('环境:', process.env.NODE_ENV);
-    console.log('========================================');
-  }, [apiEndpoint, isAuthenticated, router]);
+  }, [isAuthenticated, router]);
 
   const showNotification = (message: string, type: NotificationType = 'info') => {
     const id = Date.now().toString();
@@ -98,16 +72,13 @@ export default function Login() {
 
       const response = await authApi.login({ username, password });
       const data = response.data;
-      console.log('登录响应:', data);
       
       if (!data.token || !data.user) {
         showNotification('服务器响应格式错误，请联系管理员', 'error');
-        console.error('登录响应缺少token或user字段:', data);
         return;
       }
       
       // 保存登录信息并更新认证状态
-      console.log('登录成功，保存认证信息');
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       login(data.token, data.user);
@@ -233,28 +204,7 @@ export default function Login() {
           </div>
         </form>
         
-        {/* 调试信息，仅在开发环境显示 */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4">
-            <details>
-              <summary className="cursor-pointer text-gray-500 text-xs">调试信息</summary>
-              <pre className="mt-2 text-xs whitespace-pre-wrap overflow-x-auto bg-gray-900/50 p-3 rounded text-gray-400">
-                {debugInfo}
-              </pre>
-            </details>
-          </div>
-        )}
-        
         <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-800/30 text-gray-400">科幻风格体验</span>
-            </div>
-          </div>
-          
           <div className="mt-6 text-center text-xs text-gray-500">
             <p>登录即表示您同意我们的服务条款和隐私政策</p>
           </div>

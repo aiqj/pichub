@@ -241,9 +241,7 @@ async function handleImageRequest(path, request, env) {
   }
   
   try {
-    // 添加调试日志
-    console.log(`Retrieving image: ${imageName}`);
-    
+    // 移除调试日志
     const file = await env.R2_BUCKET.get(imageName);
     if (!file) {
       return jsonResponse({ 
@@ -306,7 +304,7 @@ async function handleRegister(request, env) {
       'INSERT INTO users (username, password, email, avatar) VALUES (?, ?, ?, ?)'
     ).bind(username, finalPassword, email || null, avatar || null).run();
     
-    await logAction(env, null, username, 'REGISTER', `用户注册。用户名: ${username}`);
+    await logAction(env, null, username, 'REGISTER', `新用户: ${username}, 注册。`);
     
     return jsonResponse({ 
       success: true,
@@ -362,7 +360,7 @@ async function handleLogin(request, env) {
     // 生成JWT令牌
     const token = generateToken(user, env);
     
-    await logAction(env, user.id, username, 'LOGIN', `用户登录。用户: ${username}`);
+    await logAction(env, user.id, username, 'LOGIN', `用户: ${username}, 登录了系统。`);
     
     return jsonResponse({ 
       success: true,
@@ -444,7 +442,7 @@ async function handleActivateUser(request, env) {
       return jsonResponse({ error: 'User not found' }, 404, request, env);
     }
     
-    await logAction(env, userId, null, 'ACTIVATE_USER', `管理员${isActive ? '激活' : '停用'}用户。用户ID: ${userId}`);
+    await logAction(env, userId, null, 'ACTIVATE_USER', `管理员${isActive ? '激活' : '停用'}用户(uid:${userId})。`);
     
     return jsonResponse({ 
       success: true,
@@ -529,7 +527,7 @@ async function handleUpdateUserProfile(request, env) {
       'SELECT id, username, email, avatar, created_at, updated_at, is_active, role FROM users WHERE id = ?'
     ).bind(user.id).first();
     
-    await logAction(env, user.id, null, 'UPDATE_USER_PROFILE', `更新个人资料。用户名: ${user.username}`);
+    await logAction(env, user.id, null, 'UPDATE_USER_PROFILE', `用户: ${updatedUserData.username}, 更新了个人资料。`);
     
     return jsonResponse({ 
       success: true,
@@ -638,7 +636,7 @@ async function handleFileUpload(request, env) {
       'INSERT INTO files (user_id, file_name, original_name, file_size, file_type) VALUES (?, ?, ?, ?, ?)'
     ).bind(user.id, filename, originalName, file.size, mimeType).run();
     
-    await logAction(env, user.id, user.username, 'UPLOAD', `上传文件。用户: ${user.username}，文件名: ${filename}`);
+    await logAction(env, user.id, user.username, 'UPLOAD', `用户: ${user.username}, 上传了一个文件。`);
     
     // 返回结果
     return jsonResponse({ 
@@ -748,7 +746,7 @@ async function handleDeleteFile(request, env) {
       'DELETE FROM files WHERE id = ?'
     ).bind(fileId).run();
     
-    await logAction(env, user.id, user.username, 'DELETE_FILE', `删除文件。用户: ${user.username}，文件名: ${file.file_name}`);
+    await logAction(env, user.id, user.username, 'DELETE_FILE', `用户: ${user.username}, 删除了一个文件。`);
     
     return jsonResponse({ 
       success: true,
@@ -793,7 +791,7 @@ async function handleUpdateUserPassword(request, env) {
       'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
     ).bind(finalPassword, userId).run();
     
-    await logAction(env, admin.id, admin.username, 'UPDATE_USER_PASSWORD', `管理员修改用户密码。用户ID: ${userId}`);
+    await logAction(env, admin.id, admin.username, 'UPDATE_USER_PASSWORD', `管理员修改用户密码(uid:${userId})。`);
     
     return jsonResponse({ 
       success: true,
@@ -858,7 +856,7 @@ async function handleDeleteUser(request, env) {
       'DELETE FROM users WHERE id = ?'
     ).bind(userId).run();
     
-    await logAction(env, admin.id, admin.username, 'DELETE_USER', `管理员删除用户。用户ID: ${userId}`);
+    await logAction(env, admin.id, admin.username, 'DELETE_USER', `管理员删除用户(uid:${userId})。`);
     
     return jsonResponse({ 
       success: true,
@@ -919,7 +917,7 @@ async function handleGetSystemLogs(request, env) {
     const isSystem = url.searchParams.get('is_system') || null;
     
     // 构建查询
-    let query = 'SELECT * FROM logs';
+    let query = 'SELECT id, user_id, username, action_type, action_detail, is_system, strftime("%Y-%m-%d %H:%M:%S", datetime(timestamp, "+8 hours")) as timestamp FROM logs';
     let conditions = [];
     let params = [];
     
@@ -986,6 +984,54 @@ async function handleGetSystemLogs(request, env) {
 }
 
 /**
+ * 管理员：获取活跃用户统计
+ */
+async function handleGetActiveUsersStats(request, env) {
+  const admin = await requireAdmin(request, env);
+  
+  if (!admin) {
+    return; // requireAdmin已处理错误响应
+  }
+  
+  try {
+    // 查询活跃用户统计
+    const activeUsersCount = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE is_active = 1'
+    ).first();
+    
+    // 查询总用户数
+    const totalUsersCount = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users'
+    ).first();
+    
+    // 获取最近7天注册的用户数
+    const recentUsersCount = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE created_at >= datetime("now", "-7 days")'
+    ).first();
+    
+    // 获取最近7天活跃的用户数
+    const recentActiveUsersCount = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE is_active = 1 AND updated_at >= datetime("now", "-7 days")'
+    ).first();
+    
+    await logAction(env, admin.id, admin.username, 'GET_USER_STATS', `管理员查询了用户统计信息。`);
+    
+    return jsonResponse({
+      success: true,
+      stats: {
+        activeUsers: activeUsersCount.count,
+        totalUsers: totalUsersCount.count,
+        recentUsers: recentUsersCount.count,
+        recentActiveUsers: recentActiveUsersCount.count,
+        activeRate: totalUsersCount.count > 0 ? (activeUsersCount.count / totalUsersCount.count * 100).toFixed(1) : 0
+      }
+    }, 200, request, env);
+  } catch (error) {
+    return jsonResponse({ error: '获取用户统计失败', message: error.message }, 500, request, env);
+  }
+}
+
+/**
  * 主要请求处理函数
  */
 export default {
@@ -1018,7 +1064,8 @@ export default {
             updatePassword: '/api/admin/users/update-password',
             deleteUser: '/api/admin/users/delete',
             files: '/api/admin/files',
-            logs: '/api/admin/logs?limit=100&offset=0&action_type=LOGIN'
+            logs: '/api/admin/logs?limit=100&offset=0&action_type=LOGIN',
+            stats: '/api/admin/users/stats'
           },
           files: {
             upload: '/api/upload',
@@ -1197,6 +1244,10 @@ export default {
       
       if (path === '/api/admin/logs' && request.method === 'GET') {
         return handleGetSystemLogs(request, env);
+      }
+      
+      if (path === '/api/admin/users/stats' && request.method === 'GET') {
+        return handleGetActiveUsersStats(request, env);
       }
     }
     

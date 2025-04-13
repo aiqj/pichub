@@ -199,8 +199,6 @@ const StorageChart: React.FC = () => {
           throw new Error('没有存储数据');
         }
         
-        console.log(`获取到 ${storageData.length} 条存储数据`);
-        
         // 计算A类和B类请求总数
         const totalClassARequests = classARequests.reduce((sum, item) => sum + (item.sum.requests || 0), 0);
         const totalClassBRequests = classBRequests.reduce((sum, item) => sum + (item.sum.requests || 0), 0);
@@ -209,8 +207,6 @@ const StorageChart: React.FC = () => {
           classA: totalClassARequests,
           classB: totalClassBRequests
         });
-        
-        console.log(`A类请求总数: ${totalClassARequests}, B类请求总数: ${totalClassBRequests}`);
         
         // 处理数据：排序并转换为图表数据格式
         const processedData = storageData
@@ -269,9 +265,7 @@ const StorageChart: React.FC = () => {
           ));
         }
       } catch (err) {
-        console.error('获取存储数据失败:', err);
-        setError(err instanceof Error ? err.message : '未知错误');
-        setChartData([]);
+        setError('无法获取存储数据，请稍后再试');
       } finally {
         setLoading(false);
       }

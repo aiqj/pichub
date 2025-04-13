@@ -19,6 +19,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   // 添加客户端渲染检测
   const [isClient, setIsClient] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition>({ top: 0, left: 0 });
   const userAvatarRef = useRef<HTMLDivElement>(null);
@@ -27,12 +28,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // 在组件挂载后设置isClient为true
   useEffect(() => {
     setIsClient(true);
-    console.log('Layout状态：', { isAuthenticated, loading, path: router.pathname });
-  }, [isAuthenticated, loading, router.pathname]);
+  }, []);
 
   const handleLogout = () => {
     logout();
-    router.push('/login').catch(err => console.error('导航错误:', err));
+    router.push('/login');
   };
 
   const isAdminRoute = router.pathname.startsWith('/admin');
@@ -40,37 +40,50 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isRegisterPage = router.pathname === '/register';
   const isAuthPage = isLoginPage || isRegisterPage;
 
-  // 客户端导航控制 - 只在客户端执行
+  // 路由变化处理
   useEffect(() => {
-    if (!isClient) return;
-
-    // 如果认证状态正在加载，不执行任何操作，等待加载完成
+    const handleRouteChange = (url: string) => {
+      // 更新当前路径状态
+      setCurrentPath(url);
+    };
+    
+    // 订阅路由变化事件
+    router.events.on('routeChangeComplete', handleRouteChange);
+    
+    // 清理函数
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router]);
+  
+  // 处理认证重定向逻辑
+  useEffect(() => {
+    // 如果还在加载认证状态，先不重定向
     if (loading) {
-      console.log('Layout: 认证状态加载中，等待...');
       return;
     }
-
-    // 如果用户未登录且不在登录/注册页面，重定向到登录页
-    if (!loading && !isAuthenticated && !isAuthPage) {
-      console.log('Layout: 用户未认证，重定向到登录页');
+    
+    // 获取当前页面路径
+    const path = router.pathname;
+    
+    // 非认证用户尝试访问需要认证的页面，重定向到登录页
+    if (!isAuthenticated && path !== '/login' && path !== '/register') {
       router.push('/login');
       return;
     }
-
-    // 如果用户已登录且在登录/注册页面，重定向到首页
-    if (!loading && isAuthenticated && isAuthPage) {
-      console.log('Layout: 用户已认证但在登录页，重定向到首页');
+    
+    // 已认证用户访问登录或注册页，重定向到首页
+    if (isAuthenticated && (path === '/login' || path === '/register')) {
       router.push('/');
       return;
     }
-
-    // 如果用户不是管理员但尝试访问管理员页面，重定向到首页
-    if (!loading && user && user.role !== 'admin' && isAdminRoute) {
-      console.log('Layout: 非管理员用户访问管理页面，重定向到首页');
+    
+    // 非管理员用户访问管理页面，重定向到首页
+    if (isAuthenticated && user && user.role !== 'admin' && path.startsWith('/admin')) {
       router.push('/');
       return;
     }
-  }, [isClient, loading, isAuthenticated, isAuthPage, user, isAdminRoute, router]);
+  }, [isAuthenticated, loading, router, user, router.pathname]);
 
   // 点击其他地方时关闭下拉菜单
   useEffect(() => {
@@ -133,7 +146,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // 如果正在客户端并且认证状态加载中，显示加载状态
   if (isClient && loading) {
-    console.log('Layout: 认证状态加载中，显示加载界面');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
@@ -143,7 +155,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }
 
   // 已通过所有重定向检查，渲染正常布局
-  console.log('Layout: 渲染正常布局内容');
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col">
       {/* 导航栏 - 只在用户登录后显示 */}

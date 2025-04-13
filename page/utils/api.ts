@@ -3,8 +3,6 @@ import axios from 'axios';
 // 根据环境确定API基础URL
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST || '';
 
-console.log('API_HOST 配置:', API_HOST);
-
 const api = axios.create({
   baseURL: API_HOST,
   headers: {
@@ -131,6 +129,21 @@ export const adminApi = {
       action: 'delete',
       userId
     });
+  },
+  getLogs: (params?: {
+    limit?: number;
+    offset?: number;
+    action_type?: string;
+    user_id?: number;
+    start_date?: string;
+    end_date?: string;
+    is_system?: boolean;
+    sort?: 'asc' | 'desc';
+  }) => {
+    return api.get('/api/admin/logs', { params });
+  },
+  getUserStats: () => {
+    return api.get('/api/admin/users/stats');
   },
 };
 

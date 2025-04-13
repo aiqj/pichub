@@ -24,11 +24,6 @@ async function fetchR2Analytics(startDate, endDate, config) {
     setConfig(config);
   }
   
-  console.log(`Fetching R2 analytics for account: ${CF_ACCOUNT_ID}`);
-  console.log(`Date range: ${startDate} to ${endDate}`);
-  console.log(`Using email: ${CF_EMAIL}`);
-  console.log(`Token available: ${CF_TOKEN ? 'Yes' : 'No'}`);
-  
   const query = `
   query {
     viewer {
@@ -183,8 +178,6 @@ async function fetchR2Analytics(startDate, endDate, config) {
   }`;
 
   try {
-    console.log("Sending GraphQL request to Cloudflare API...");
-    
     const response = await fetch(GRAPHQL_URL, {
       method: 'POST',
       headers: {

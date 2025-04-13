@@ -23,7 +23,6 @@ const FilesPage = () => {
           setFiles(response.data.files);
         }
       } catch (err: any) {
-        console.error('获取文件失败:', err);
         setError('获取文件列表失败，请刷新页面重试。');
       } finally {
         setLoading(false);

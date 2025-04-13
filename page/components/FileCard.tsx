@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FileItem } from '../types';
 import Button from './ui/Button';
 import { fileApi } from '../utils/api';
+import { toast } from 'react-toastify';
 
 interface FileCardProps {
   file: FileItem;
@@ -42,31 +43,39 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
   };
   
   // 复制到剪贴板
-  const copyToClipboard = async (text: string, type: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyStatus({ ...copyStatus, [type]: true });
-      setTimeout(() => {
-        setCopyStatus({ ...copyStatus, [type]: false });
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-    }
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopyStatus({ ...copyStatus, [type]: true });
+        setTimeout(() => {
+          setCopyStatus({ ...copyStatus, [type]: false });
+        }, 2000);
+      })
+      .catch(err => {
+        toast.error('复制失败，请手动复制');
+      });
   };
   
-  // 处理删除
+  // 删除文件
   const handleDelete = async () => {
-    if (confirm('确定要删除此文件吗？')) {
-      try {
-        setIsDeleting(true);
-        await fileApi.deleteFile(file.id);
+    if (!window.confirm('确定要删除这个文件吗？此操作不可恢复。')) {
+      return;
+    }
+    
+    setIsDeleting(true);
+    
+    try {
+      const response = await fileApi.deleteFile(file.id);
+      if (response.data.success) {
+        toast.success('文件已成功删除');
         onDelete(file.id);
-      } catch (error) {
-        console.error('删除文件失败:', error);
-        alert('删除文件失败，请重试');
-      } finally {
-        setIsDeleting(false);
+      } else {
+        toast.error(response.data.message || '删除失败，请重试');
       }
+    } catch (error) {
+      toast.error('删除文件时发生错误，请重试');
+    } finally {
+      setIsDeleting(false);
     }
   };
   

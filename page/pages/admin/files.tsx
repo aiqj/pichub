@@ -4,6 +4,7 @@ import Input from '../../components/ui/Input';
 import { FileItem } from '../../types';
 import { adminApi, fileApi } from '../../utils/api';
 import ImagePreview from '../../components/ImagePreview';
+import { toast } from 'react-toastify';
 
 const AdminFilesPage = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -28,7 +29,6 @@ const AdminFilesPage = () => {
           setFiles(response.data.files);
         }
       } catch (err: any) {
-        console.error('获取文件失败:', err);
         setError('获取文件列表失败，请刷新页面重试');
       } finally {
         setLoading(false);
@@ -60,10 +60,11 @@ const AdminFilesPage = () => {
       
       // 更新本地状态
       setFiles((prevFiles) => prevFiles.filter((f) => f.id !== selectedFile.id));
+      toast.success('文件删除成功');
       closeDeleteModal();
     } catch (err: any) {
-      console.error('删除文件失败:', err);
       setError('删除文件失败，请重试');
+      toast.error('删除文件失败');
     } finally {
       setDeleteLoading(false);
     }

@@ -5,9 +5,6 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { authApi } from '../utils/api';
 
-// 标记此页面不使用布局
-Register.noLayout = true;
-
 function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -58,7 +55,10 @@ function Register() {
         setError(response.data.error || '注册失败，请稍后重试');
       }
     } catch (err: any) {
-      console.error('注册错误:', err);
+      // 清空加载状态
+      setLoading(false);
+      
+      // 处理具体的错误响应
       if (err.response && err.response.data) {
         if (err.response.status === 409) {
           setError(err.response.data.error || '用户名或邮箱已存在');
@@ -202,4 +202,5 @@ function Register() {
   );
 }
 
-export default Register; 
+export default Register;
+Register.noLayout = true; 

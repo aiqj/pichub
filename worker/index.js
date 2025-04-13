@@ -12,6 +12,34 @@
 import { generateToken, authenticate, requireAdmin, hashPasswordSecureDeterministic, verifyPasswordSecureDeterministic } from './auth.js';
 import { handleAnalyticsRequest } from './r2Analytics.js';
 
+/**
+ * 记录系统操作日志
+ * @param {Object} env - 环境变量
+ * @param {number|null} userId - 用户ID，系统操作可为null
+ * @param {string|null} username - 用户名，系统操作可为null
+ * @param {string} actionType - 操作类型，如 LOGIN, REGISTER, UPLOAD, DELETE等
+ * @param {string} actionDetail - 操作详情
+ * @param {boolean} isSystem - 是否为系统操作
+ * @returns {Promise<void>}
+ */
+async function logAction(env, userId, username, actionType, actionDetail, isSystem = false) {
+  try {
+    await env.DB.prepare(
+      'INSERT INTO logs (user_id, username, action_type, action_detail, is_system) VALUES (?, ?, ?, ?, ?)'
+    ).bind(
+      userId, 
+      username, 
+      actionType, 
+      actionDetail, 
+      isSystem ? 1 : 0
+    ).run();
+    
+    console.log(`[LOG] ${actionType}: ${actionDetail} (${isSystem ? 'SYSTEM' : username || userId})`);
+  } catch (error) {
+    console.error('Error recording log:', error);
+  }
+}
+
 // 已知文件类型的魔数签名
 const FILE_SIGNATURES = {
   // JPEG: SOI marker followed by FF
@@ -278,6 +306,8 @@ async function handleRegister(request, env) {
       'INSERT INTO users (username, password, email, avatar) VALUES (?, ?, ?, ?)'
     ).bind(username, finalPassword, email || null, avatar || null).run();
     
+    await logAction(env, null, username, 'REGISTER', `用户注册。用户名: ${username}`);
+    
     return jsonResponse({ 
       success: true,
       message: '注册成功，请联系管理员激活您的账号' 
@@ -304,17 +334,20 @@ async function handleLogin(request, env) {
     ).bind(username).first();
     
     if (!user) {
+      // await logAction(env, null, username, 'LOGIN_FAILED', `登录失败 - 无效的用户名。用户: ${username}`, true);
       return jsonResponse({ error: 'Invalid credentials' }, 401, request, env);
     }
     
     // 验证密码
     const isValidPassword = await verifyPasswordSecureDeterministic(password, user.password);
     if (!isValidPassword) {
+      // await logAction(env, user.id, username, 'LOGIN_FAILED', `登录失败 - 密码错误。用户: ${username}`, true);
       return jsonResponse({ error: 'Invalid credentials' }, 401, request, env);
     }
     
     // 检查账号是否已激活
     if (!user.is_active) {
+      // await logAction(env, user.id, username, 'LOGIN_FAILED', `登录失败 - 账号未激活。用户: ${username}`, true);
       return jsonResponse({ 
         error: 'Account not activated',
         message: '您的账号尚未激活，请联系管理员' 
@@ -328,6 +361,8 @@ async function handleLogin(request, env) {
     
     // 生成JWT令牌
     const token = generateToken(user, env);
+    
+    await logAction(env, user.id, username, 'LOGIN', `用户登录。用户: ${username}`);
     
     return jsonResponse({ 
       success: true,
@@ -360,6 +395,8 @@ async function handleGetUserInfo(request, env) {
     'SELECT id, username, email, avatar, created_at, updated_at, is_active, role FROM users WHERE id = ?'
   ).bind(user.id).first();
   
+  // await logAction(env, user.id, user.username, 'GET_USER_INFO', `获取用户信息。用户: ${user.username}`);
+  
   return jsonResponse({ user: userData }, 200, request, env);
 }
 
@@ -376,6 +413,8 @@ async function handleGetAllUsers(request, env) {
   const users = await env.DB.prepare(
     'SELECT id, username, email, avatar, created_at, updated_at, is_active, role FROM users'
   ).all();
+  
+  // await logAction(env, null, null, 'GET_ALL_USERS', `管理员获取所有用户列表`);
   
   return jsonResponse({ users: users.results }, 200, request, env);
 }
@@ -404,6 +443,8 @@ async function handleActivateUser(request, env) {
     if (result.changes === 0) {
       return jsonResponse({ error: 'User not found' }, 404, request, env);
     }
+    
+    await logAction(env, userId, null, 'ACTIVATE_USER', `管理员${isActive ? '激活' : '停用'}用户。用户ID: ${userId}`);
     
     return jsonResponse({ 
       success: true,
@@ -488,6 +529,8 @@ async function handleUpdateUserProfile(request, env) {
       'SELECT id, username, email, avatar, created_at, updated_at, is_active, role FROM users WHERE id = ?'
     ).bind(user.id).first();
     
+    await logAction(env, user.id, null, 'UPDATE_USER_PROFILE', `更新个人资料。用户名: ${user.username}`);
+    
     return jsonResponse({ 
       success: true,
       message: '用户资料更新成功',
@@ -540,6 +583,7 @@ async function handleFileUpload(request, env) {
     // 检查文件大小
     const maxSize = parseInt(env.MAX_FILE_SIZE || '52428800'); // 默认50MB
     if (file.size > maxSize) {
+      // await logAction(env, user.id, user.username, 'UPLOAD_FAILED', `上传失败 - 文件过大。大小: ${file.size} 字节`, true);
       return jsonResponse({ 
         error: 'File too large', 
         maxSize: `${maxSize / 1024 / 1024}MB`,
@@ -554,6 +598,7 @@ async function handleFileUpload(request, env) {
     const mimeType = file.type;
     const isValidType = await validateFileType(fileBuffer, mimeType, env);
     if (!isValidType) {
+      // await logAction(env, user.id, user.username, 'UPLOAD_FAILED', `上传失败 - 文件类型不支持。类型: ${mimeType}`, true);
       return jsonResponse({ 
         error: 'Invalid file type', 
         providedType: mimeType,
@@ -592,6 +637,8 @@ async function handleFileUpload(request, env) {
     await env.DB.prepare(
       'INSERT INTO files (user_id, file_name, original_name, file_size, file_type) VALUES (?, ?, ?, ?, ?)'
     ).bind(user.id, filename, originalName, file.size, mimeType).run();
+    
+    await logAction(env, user.id, user.username, 'UPLOAD', `上传文件。用户: ${user.username}，文件名: ${filename}`);
     
     // 返回结果
     return jsonResponse({ 
@@ -635,6 +682,8 @@ async function handleGetUserFiles(request, env) {
     'SELECT * FROM files WHERE user_id = ? ORDER BY uploaded_at DESC'
   ).bind(userId).all();
   
+  // await logAction(env, user.id, user.username, 'GET_USER_FILES', `获取用户文件列表。用户ID: ${userId}`);
+  
   return jsonResponse({ files: files.results }, 200, request, env);
 }
 
@@ -654,6 +703,8 @@ async function handleGetAllFiles(request, env) {
      JOIN users ON files.user_id = users.id
      ORDER BY files.uploaded_at DESC`
   ).all();
+  
+  // await logAction(env, admin.id, admin.username, 'GET_ALL_FILES', `管理员获取所有文件列表`);
   
   return jsonResponse({ files: files.results }, 200, request, env);
 }
@@ -697,6 +748,8 @@ async function handleDeleteFile(request, env) {
       'DELETE FROM files WHERE id = ?'
     ).bind(fileId).run();
     
+    await logAction(env, user.id, user.username, 'DELETE_FILE', `删除文件。用户: ${user.username}，文件名: ${file.file_name}`);
+    
     return jsonResponse({ 
       success: true,
       message: '文件已成功删除'
@@ -739,6 +792,8 @@ async function handleUpdateUserPassword(request, env) {
     const result = await env.DB.prepare(
       'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
     ).bind(finalPassword, userId).run();
+    
+    await logAction(env, admin.id, admin.username, 'UPDATE_USER_PASSWORD', `管理员修改用户密码。用户ID: ${userId}`);
     
     return jsonResponse({ 
       success: true,
@@ -803,6 +858,8 @@ async function handleDeleteUser(request, env) {
       'DELETE FROM users WHERE id = ?'
     ).bind(userId).run();
     
+    await logAction(env, admin.id, admin.username, 'DELETE_USER', `管理员删除用户。用户ID: ${userId}`);
+    
     return jsonResponse({ 
       success: true,
       message: '用户及其所有文件已成功删除' 
@@ -840,6 +897,95 @@ async function handleEncrypt(request, env) {
 }
 
 /**
+ * 管理员：获取系统日志
+ */
+async function handleGetSystemLogs(request, env) {
+  const admin = await requireAdmin(request, env);
+  
+  if (!admin) {
+    return; // requireAdmin已处理错误响应
+  }
+  
+  try {
+    const url = new URL(request.url);
+    
+    // 获取查询参数
+    const limit = parseInt(url.searchParams.get('limit') || '100');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const actionType = url.searchParams.get('action_type') || null;
+    const userId = url.searchParams.get('user_id') || null;
+    const startDate = url.searchParams.get('start_date') || null;
+    const endDate = url.searchParams.get('end_date') || null;
+    const isSystem = url.searchParams.get('is_system') || null;
+    
+    // 构建查询
+    let query = 'SELECT * FROM logs';
+    let conditions = [];
+    let params = [];
+    
+    if (actionType) {
+      conditions.push('action_type = ?');
+      params.push(actionType);
+    }
+    
+    if (userId) {
+      conditions.push('user_id = ?');
+      params.push(userId);
+    }
+    
+    if (startDate) {
+      conditions.push('timestamp >= ?');
+      params.push(startDate);
+    }
+    
+    if (endDate) {
+      conditions.push('timestamp <= ?');
+      params.push(endDate);
+    }
+    
+    if (isSystem !== null) {
+      conditions.push('is_system = ?');
+      params.push(isSystem === 'true' ? 1 : 0);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    // 添加排序和分页
+    query += ' ORDER BY timestamp DESC LIMIT ? OFFSET ?';
+    params.push(limit);
+    params.push(offset);
+    
+    // 执行查询
+    const logs = await env.DB.prepare(query).bind(...params).all();
+    
+    // 获取总记录数
+    let countQuery = 'SELECT COUNT(*) as count FROM logs';
+    if (conditions.length > 0) {
+      countQuery += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    const totalResult = await env.DB.prepare(countQuery).bind(...params.slice(0, params.length - 2)).first();
+    const total = totalResult ? totalResult.count : 0;
+    
+    // await logAction(env, admin.id, admin.username, 'GET_LOGS', `管理员查看系统日志。每页数量: ${limit}, 偏移量: ${offset}`);
+    
+    return jsonResponse({ 
+      logs: logs.results, 
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + logs.results.length < total
+      }
+    }, 200, request, env);
+  } catch (error) {
+    return jsonResponse({ error: 'Failed to retrieve logs', message: error.message }, 500, request, env);
+  }
+}
+
+/**
  * 主要请求处理函数
  */
 export default {
@@ -871,7 +1017,8 @@ export default {
             activateUser: '/api/admin/users/activate',
             updatePassword: '/api/admin/users/update-password',
             deleteUser: '/api/admin/users/delete',
-            files: '/api/admin/files'
+            files: '/api/admin/files',
+            logs: '/api/admin/logs?limit=100&offset=0&action_type=LOGIN'
           },
           files: {
             upload: '/api/upload',
@@ -962,10 +1109,12 @@ export default {
         // 构建图像URL并返回
         const imageUrl = `${url.origin}/images/${filename}`;
         
-        // 修改：记录上传到files表
+        // 上传记录插入到files表
         await env.DB.prepare(
           'INSERT INTO files (user_id, file_name, original_name, file_size, file_type) VALUES (?, ?, ?, ?, ?)'
         ).bind(user.id, filename, originalName, file.size, mimeType).run();
+        
+        // await logAction(env, user.id, user.username, 'UPLOAD', `上传文件。用户: ${user.username}，文件名: ${filename}`);
         
         return jsonResponse({ 
           success: true, 
@@ -1045,9 +1194,14 @@ export default {
       if (path === '/api/admin/users/delete' && request.method === 'POST') {
         return handleDeleteUser(request, env);
       }
+      
+      if (path === '/api/admin/logs' && request.method === 'GET') {
+        return handleGetSystemLogs(request, env);
+      }
     }
     
     // 所有其他路径返回404
+    // await logAction(env, null, null, 'SYSTEM', '页面未找到 - 未识别的端点', true);
     return jsonResponse({ error: 'Not found' }, 404, request, env);
   }
 }; 

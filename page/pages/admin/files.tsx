@@ -5,6 +5,7 @@ import { FileItem } from '../../types';
 import { adminApi, fileApi } from '../../utils/api';
 import ImagePreview from '../../components/ImagePreview';
 import { toast } from 'react-toastify';
+import DeleteConfirmModal from '../../components/DeleteConfirmModal';
 
 const AdminFilesPage = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -97,10 +98,77 @@ const AdminFilesPage = () => {
     }
   };
   
+  // 格式化日期
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    
+    // 获取现在的时间
+    const now = new Date();
+    
+    // 计算时间差（毫秒）
+    const diff = now.getTime() - date.getTime();
+    
+    // 判断是否是今天上传的
+    const isToday = date.toDateString() === now.toDateString();
+    
+    // 判断是否是昨天上传的
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+    
+    // 根据不同情况返回不同格式
+    if (isToday) {
+      // 如果是今天，显示"今天 HH:MM"
+      return `今天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (isYesterday) {
+      // 如果是昨天，显示"昨天 HH:MM"
+      return `昨天 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diff < 7 * 24 * 60 * 60 * 1000) {
+      // 如果是最近7天，显示"星期X HH:MM"
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      return `星期${weekdays[date.getDay()]} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (date.getFullYear() === now.getFullYear()) {
+      // 如果是今年但超过7天，显示"MM-DD HH:MM"
+      return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } else {
+      // 其他情况显示完整日期
+      return date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+  };
+  
   // 切换分享选项的显示
   const toggleShareOptions = (fileId: number) => {
     setSharingFileId(sharingFileId === fileId ? null : fileId);
   };
+  
+  // 关闭所有分享面板
+  const closeSharePanel = () => {
+    setSharingFileId(null);
+  };
+  
+  // 处理点击外部区域关闭分享面板
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // 如果点击的是分享按钮，不关闭面板（因为按钮点击会触发自己的逻辑）
+      if ((event.target as Element).closest('.share-button')) {
+        return;
+      }
+      
+      // 如果点击在分享面板外且分享面板正在显示，则关闭它
+      const sharePanel = document.querySelector('.share-panel');
+      if (sharingFileId && sharePanel && !sharePanel.contains(event.target as Node)) {
+        closeSharePanel();
+      }
+    };
+
+    // 添加点击事件监听器
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // 清理函数
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [sharingFileId]); // 依赖于sharingFileId，确保监听器在面板打开/关闭状态变化时更新
   
   // 复制到剪贴板
   const copyToClipboard = (text: string, type: string) => {
@@ -193,7 +261,7 @@ const AdminFilesPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
       ) : error ? (
-        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 px-6 py-4 rounded-md theme-transition">
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 px-6 py-4 rounded-md theme-transition shadow-sm backdrop-blur-sm">
           {error}
         </div>
       ) : filteredFiles.length === 0 ? (
@@ -275,97 +343,141 @@ const AdminFilesPage = () => {
                       {formatFileSize(file.file_size)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition">
-                        {new Date(file.upload_time).toLocaleDateString()}
-                      </div>
-                      <div className="text-xs text-gray-500 theme-transition">
-                        {new Date(file.upload_time).toLocaleTimeString()}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition group relative cursor-help">
+                        {formatDate(file.uploaded_at)}
+                        <span className="absolute bottom-full left-0 mb-2 w-44 rounded bg-black/80 p-1 text-center text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                          {new Date(file.uploaded_at).toLocaleString('zh-CN', { 
+                            year: 'numeric', 
+                            month: '2-digit', 
+                            day: '2-digit', 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit',
+                            weekday: 'long'
+                          })}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-2 relative">
                         {file.file_type.startsWith('image/') && (
                           <button
                             onClick={() => handlePreviewImage(file)}
-                            className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-1 rounded text-xs transition theme-transition"
+                            className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-1 rounded text-xs transition-all duration-300 theme-transition hover:shadow-md hover:shadow-blue-500/20 hover:scale-105 flex items-center space-x-1 relative overflow-hidden group"
                           >
-                            预览
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 group-hover:animate-shimmer bg-200%"></span>
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-3 w-3 relative z-10"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span className="relative z-10">预览</span>
                           </button>
                         )}
                         <button
                           onClick={() => toggleShareOptions(file.id)}
-                          className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-2 py-1 rounded text-xs transition theme-transition"
+                          className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-2 py-1 rounded text-xs transition-all duration-300 theme-transition hover:shadow-md hover:shadow-green-500/20 hover:scale-105 flex items-center space-x-1 relative overflow-hidden group share-button"
                         >
-                          分享
+                          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-green-500/0 via-green-500/10 to-green-500/0 group-hover:animate-shimmer bg-200%"></span>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3 relative z-10"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                          </svg>
+                          <span className="relative z-10">分享</span>
                         </button>
                         <button
                           onClick={() => openDeleteModal(file)}
-                          className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-2 py-1 rounded text-xs transition theme-transition"
+                          className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-2 py-1 rounded text-xs transition-all duration-300 theme-transition hover:shadow-md hover:shadow-red-500/20 hover:scale-105 flex items-center space-x-1 relative overflow-hidden group"
                         >
-                          删除
+                          <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 group-hover:animate-shimmer bg-200%"></span>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3 w-3 transition-all duration-300 group-hover:rotate-12 relative z-10"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span className="relative z-10">删除</span>
                         </button>
-                      </div>
                       
-                      {/* 分享选项面板 */}
-                      {sharingFileId === file.id && (
-                        <div className="absolute mt-2 right-8 rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-10 w-72 text-left theme-transition">
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">直接链接</label>
-                              <div className="flex">
-                                <input 
-                                  type="text" 
-                                  readOnly 
-                                  value={getFileShareLinks(file).url}
-                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
-                                />
-                                <button 
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).url, 'url')} 
-                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
-                                >
-                                  {copyStatus['url'] ? '已复制' : '复制'}
-                                </button>
-                              </div>
+                        {/* 分享选项面板 */}
+                        {sharingFileId === file.id && (
+                          <div className="absolute top-full mt-2 right-0 sm:right-0 lg:left-auto lg:right-full lg:mr-2 rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-50 w-72 text-left theme-transition share-panel">
+                            {/* 指示箭头 - 右侧面板时显示在顶部，左侧面板时显示在右侧 */}
+                            <div className="absolute block lg:hidden top-0 right-8 transform -translate-y-1/2">
+                              <div className="bg-white dark:bg-gray-800 w-3 h-3 rotate-45 border-t border-l border-gray-200 dark:border-gray-700 theme-transition"></div>
+                            </div>
+                            <div className="absolute hidden lg:block top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2">
+                              <div className="bg-white dark:bg-gray-800 w-3 h-3 rotate-45 border-r border-t border-gray-200 dark:border-gray-700 theme-transition"></div>
                             </div>
                             
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">HTML 代码</label>
-                              <div className="flex">
-                                <input 
-                                  type="text" 
-                                  readOnly 
-                                  value={getFileShareLinks(file).htmlCode} 
-                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
-                                />
-                                <button 
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).htmlCode, 'htmlCode')} 
-                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
-                                >
-                                  {copyStatus['htmlCode'] ? '已复制' : '复制'}
-                                </button>
-                              </div>
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 theme-transition">分享链接</h4>
+                            
+                            {/* 输入框 */}
+                            <div className="mb-3">
+                              <input 
+                                type="text" 
+                                readOnly 
+                                value={getFileShareLinks(file).url}
+                                className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
+                                onClick={(e) => (e.target as HTMLInputElement).select()}
+                              />
                             </div>
                             
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">Markdown 代码</label>
-                              <div className="flex">
-                                <input 
-                                  type="text" 
-                                  readOnly 
-                                  value={getFileShareLinks(file).markdownCode} 
-                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
-                                />
-                                <button 
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).markdownCode, 'markdownCode')} 
-                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
-                                >
-                                  {copyStatus['markdownCode'] ? '已复制' : '复制'}
-                                </button>
-                              </div>
+                            {/* 复制按钮组 - 一行显示三个按钮 */}
+                            <div className="flex space-x-2 justify-between">
+                              <button 
+                                onClick={() => copyToClipboard(getFileShareLinks(file).url, 'url')} 
+                                className="flex-1 bg-indigo-500 text-white px-2 py-1.5 rounded text-xs hover:bg-indigo-600 transition-all duration-300 relative overflow-hidden group"
+                              >
+                                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-500/0 via-indigo-500/30 to-indigo-500/0 group-hover:animate-shimmer bg-200%"></span>
+                                <span className="relative z-10">复制链接</span>
+                              </button>
+                              
+                              <button 
+                                onClick={() => copyToClipboard(getFileShareLinks(file).htmlCode, 'htmlCode')} 
+                                className="flex-1 bg-blue-500 text-white px-2 py-1.5 rounded text-xs hover:bg-blue-600 transition-all duration-300 relative overflow-hidden group"
+                              >
+                                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 group-hover:animate-shimmer bg-200%"></span>
+                                <span className="relative z-10">复制HTML</span>
+                              </button>
+                              
+                              <button 
+                                onClick={() => copyToClipboard(getFileShareLinks(file).markdownCode, 'markdownCode')} 
+                                className="flex-1 bg-green-500 text-white px-2 py-1.5 rounded text-xs hover:bg-green-600 transition-all duration-300 relative overflow-hidden group"
+                              >
+                                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-green-500/0 via-green-500/30 to-green-500/0 group-hover:animate-shimmer bg-200%"></span>
+                                <span className="relative z-10">复制MD</span>
+                              </button>
                             </div>
+                            
+                            {/* 关闭按钮 */}
+                            <button
+                              onClick={() => toggleShareOptions(file.id)}
+                              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            >
+                              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -377,34 +489,14 @@ const AdminFilesPage = () => {
       
       {/* 删除确认模态框 */}
       {isDeleteModalOpen && selectedFile && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden theme-transition">
-            <div className="bg-red-500 px-6 py-4">
-              <h3 className="text-white text-lg font-medium">删除文件</h3>
-              <p className="text-red-200 text-sm">此操作不可撤销</p>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-700 dark:text-gray-300 mb-4 theme-transition">
-                您确定要删除文件 <span className="font-bold">{selectedFile.original_name}</span> 吗？该操作将永久删除此文件，无法恢复。
-              </p>
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={closeDeleteModal}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 theme-transition"
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleDeleteFile}
-                  disabled={deleteLoading}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {deleteLoading ? '处理中...' : '确认删除'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DeleteConfirmModal
+          isOpen={isDeleteModalOpen}
+          title="删除文件"
+          message={`您确定要删除文件 "${selectedFile.original_name}" 吗？该操作将永久删除此文件，无法恢复。`}
+          onCancel={closeDeleteModal}
+          onConfirm={handleDeleteFile}
+          isLoading={deleteLoading}
+        />
       )}
       
       {/* 图片预览模态框 */}

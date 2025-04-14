@@ -61,7 +61,7 @@ const FilesPage = () => {
   
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-6">
+      <h1 className="hidden text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-6">
         我的文件
       </h1>
       
@@ -71,7 +71,7 @@ const FilesPage = () => {
             {renderSkeletons()}
           </div>
         ) : error ? (
-          <div className="bg-red-100/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-md theme-transition">
+          <div className="bg-red-100/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-md theme-transition shadow-sm backdrop-blur-sm">
             {error}
           </div>
         ) : files.length === 0 ? (
@@ -128,6 +128,11 @@ const FilesPage = () => {
         {files.length > 0 && (
           <div className="mt-8 text-sm text-gray-600 dark:text-gray-400 text-center theme-transition">
             总共 {files.length} 个文件
+            {files.length > 1 && (
+              <p className="text-xs mt-1 text-gray-500 dark:text-gray-500">最早上传于 {new Date(
+                Math.min(...files.map(file => new Date(file.uploaded_at).getTime()))
+              ).toLocaleDateString('zh-CN')}</p>
+            )}
           </div>
         )}
       </div>

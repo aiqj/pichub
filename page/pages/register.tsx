@@ -5,6 +5,9 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { authApi } from '../utils/api';
 
+// 标记此页面不使用布局
+Register.noLayout = true;
+
 function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -84,8 +87,37 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8 theme-transition">
-      <div className="max-w-md w-full space-y-8 bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm p-8 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xl theme-transition">
+    <div className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-indigo-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8 theme-transition overflow-hidden">
+      {/* 天马行空背景元素 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* 漂浮的云朵 */}
+        <div className="absolute top-10 left-[5%] w-24 h-12 bg-white dark:bg-gray-700 rounded-full opacity-40 blur-md animate-float"></div>
+        <div className="absolute top-[15%] right-[10%] w-32 h-16 bg-white dark:bg-gray-700 rounded-full opacity-30 blur-md animate-float-slow"></div>
+        <div className="absolute bottom-[20%] left-[15%] w-40 h-20 bg-white dark:bg-gray-700 rounded-full opacity-50 blur-md animate-float-reverse"></div>
+        
+        {/* 星星 */}
+        <div className="absolute top-[20%] left-[20%] w-1 h-1 bg-indigo-300 dark:bg-indigo-500 rounded-full animate-pulse"></div>
+        <div className="absolute top-[30%] right-[30%] w-2 h-2 bg-purple-300 dark:bg-purple-500 rounded-full animate-pulse-slow"></div>
+        <div className="absolute bottom-[40%] left-[40%] w-1.5 h-1.5 bg-yellow-300 dark:bg-yellow-500 rounded-full animate-pulse-fast"></div>
+        <div className="absolute top-[15%] right-[45%] w-1 h-1 bg-pink-300 dark:bg-pink-500 rounded-full animate-pulse-slow"></div>
+        <div className="absolute bottom-[25%] right-[15%] w-1.5 h-1.5 bg-indigo-300 dark:bg-indigo-500 rounded-full animate-pulse"></div>
+        
+        {/* 飘浮的图片框 */}
+        <div className="absolute top-[15%] left-[25%] w-16 h-16 border-2 border-indigo-300 dark:border-indigo-600 rounded-lg rotate-12 opacity-70 animate-float-slow"></div>
+        <div className="absolute bottom-[30%] right-[25%] w-12 h-16 border-2 border-purple-300 dark:border-purple-600 rounded-lg -rotate-6 opacity-60 animate-float"></div>
+        <div className="absolute top-[50%] right-[10%] w-20 h-14 border-2 border-indigo-300 dark:border-indigo-600 rounded-lg rotate-3 opacity-70 animate-float-reverse"></div>
+        
+        {/* 彩色光晕 */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400 dark:bg-purple-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light opacity-20 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-400 dark:bg-indigo-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light opacity-20 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-pink-400 dark:bg-pink-900 rounded-full mix-blend-multiply dark:mix-blend-soft-light opacity-10 blur-3xl animate-pulse"></div>
+      </div>
+
+      <div className="max-w-md w-full space-y-8 bg-white/70 dark:bg-gray-800/50 backdrop-blur-md p-8 rounded-xl border border-gray-200/80 dark:border-gray-700/80 shadow-2xl theme-transition relative z-10 hover:shadow-indigo-200 dark:hover:shadow-indigo-900/50 transition-all duration-300">
+        {/* 装饰元素 */}
+        <div className="absolute -top-5 -left-5 w-10 h-10 bg-indigo-400 dark:bg-indigo-600 rounded-full opacity-50 blur-sm"></div>
+        <div className="absolute -bottom-5 -right-5 w-10 h-10 bg-purple-400 dark:bg-purple-600 rounded-full opacity-50 blur-sm"></div>
+        
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
             创建您的PicHub账号
@@ -97,13 +129,13 @@ function Register() {
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-100/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md text-sm theme-transition">
+            <div className="bg-red-100/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md text-sm theme-transition shadow-sm backdrop-blur-sm">
               {error}
             </div>
           )}
           
           {success && (
-            <div className="bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-md text-sm theme-transition">
+            <div className="bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-md text-sm theme-transition shadow-sm backdrop-blur-sm">
               {success}
             </div>
           )}
@@ -254,5 +286,4 @@ function Register() {
   );
 }
 
-export default Register;
-Register.noLayout = true; 
+export default Register; 

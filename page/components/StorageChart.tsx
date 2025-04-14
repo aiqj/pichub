@@ -386,7 +386,7 @@ const StorageChart: React.FC = () => {
         width={60}
         domain={yAxisDomains.left}
         allowDecimals={false}
-        label={{ 
+        label={{
           value: '对象数量', 
           angle: -90, 
           position: 'insideLeft', 
@@ -657,6 +657,11 @@ const StorageChart: React.FC = () => {
                 组合图
               </button>
             </div>
+            <div>
+              {stats && (
+                <span className="ml-2 text-xs text-gray-400">更新时间: {stats.date}</span>
+              )}
+            </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -697,7 +702,7 @@ const StorageChart: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
-                    所有文件占用的总存储空间（包含元数据）
+                    所有文件占用的总存储空间（包含元数据）。每月10GB免费
                   </div>
                 </div>
               </div>
@@ -717,55 +722,43 @@ const StorageChart: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 dark:text-amber-400 mr-2 theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">API请求</h3>
+                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">A类</h3>
                 <div className="relative group ml-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
-                    本月API请求次数统计
+                    A类操作主要包括写入和删除存储资源。每月100万次免费
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <div>
-                  <div className="flex items-center">
-                    <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">A类</h3>
-                    <div className="relative group ml-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
-                        A类操作主要包括写入和删除存储资源。每月100万次免费
-                      </div>
-                    </div>
+              <p className={`text-2xl font-semibold ${
+                requestCounts.classA < 500000 ? 'text-gray-700 dark:text-gray-200' : 
+                (requestCounts.classA < 750000 ? 'text-blue-600 dark:text-blue-400' : 
+                (requestCounts.classA < 1000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
+              } theme-transition`}>{requestCounts.classA}</p>
+            </div>
+            
+            <div className="bg-gray-100/70 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 theme-transition">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600 dark:text-emerald-400 mr-2 theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">B类</h3>
+                <div className="relative group ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                    B类操作主要包括查看和查询存储资源。每月1000万次免费
                   </div>
-                  <p className={`font-medium ${
-                    requestCounts.classA < 500000 ? 'text-gray-700 dark:text-gray-200' : 
-                    (requestCounts.classA < 750000 ? 'text-blue-600 dark:text-blue-400' : 
-                    (requestCounts.classA < 1000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
-                  } theme-transition`}>{requestCounts.classA}</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center">
-                    <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">B类</h3>
-                    <div className="relative group ml-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
-                        B类操作主要包括查看和查询存储资源。每月1000万次免费
-                      </div>
-                    </div>
-                  </div>
-                  <p className={`font-medium ${
-                    requestCounts.classB < 5000000 ? 'text-gray-700 dark:text-gray-200' : 
-                    (requestCounts.classB < 7500000 ? 'text-blue-600 dark:text-blue-400' : 
-                    (requestCounts.classB < 10000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
-                  } theme-transition`}>{requestCounts.classB}</p>
                 </div>
               </div>
+              <p className={`text-2xl font-semibold ${
+                requestCounts.classB < 5000000 ? 'text-gray-700 dark:text-gray-200' : 
+                (requestCounts.classB < 7500000 ? 'text-blue-600 dark:text-blue-400' : 
+                (requestCounts.classB < 10000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
+              } theme-transition`}>{requestCounts.classB}</p>
             </div>
           </div>
         </div>

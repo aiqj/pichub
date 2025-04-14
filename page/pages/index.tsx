@@ -338,7 +338,7 @@ const Home = () => {
   // 以下是已认证用户的界面
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-6">
+      <h1 className="hidden text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-6">
         文件上传
       </h1>
       
@@ -419,13 +419,27 @@ const Home = () => {
                 
                 {isUploading && (
                   <div className="mt-3">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 theme-transition">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 theme-transition overflow-hidden relative">
                       <div 
-                        className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
+                        className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-300 relative"
                         style={{ width: `${uploadProgress}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/20 animate-shimmer bg-200%"></div>
+                      </div>
+                      {/* 添加光滑的闪烁效果 */}
+                      <div 
+                        className="absolute h-full w-20 bg-white/10 animate-shimmer bg-200% skew-x-30"
+                        style={{ 
+                          left: `${uploadProgress - 20}%`,
+                          opacity: uploadProgress > 10 ? 1 : 0,
+                          transition: 'opacity 0.3s ease'
+                        }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right theme-transition">{uploadProgress}%</p>
+                    <div className="flex justify-between text-xs mt-1">
+                      <p className="text-gray-500 dark:text-gray-400 theme-transition">上传中，请稍候...</p>
+                      <p className="text-gray-700 dark:text-gray-300 font-medium theme-transition">{uploadProgress}%</p>
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { AppProps } from 'next/app';
 import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { LoadingProvider, useLoading } from '../contexts/LoadingContext';
 import Layout from '../components/layout/Layout';
+import LoadingScreen from '../components/ui/LoadingScreen';
 import dynamic from 'next/dynamic';
 import '../styles/globals.css';
 
@@ -30,9 +32,56 @@ type CustomAppProps = AppProps & {
   };
 };
 
-function MyApp({ Component, pageProps, router }: CustomAppProps) {
-  // 使用路由路径作为key,确保组件不会复用
+// 主应用容器组件，用于处理路由切换和加载状态
+const AppContainer = ({ Component, pageProps, router }: CustomAppProps) => {
+  const { isInitialLoading, isRouteChanging, startLoading, stopLoading } = useLoading();
+  
+  // 是否显示加载界面
+  const showLoading = isInitialLoading || isRouteChanging;
+  
+  // 使用路由路径作为key，确保组件不会复用
   const pageKey = router.pathname;
+  
+  // 内容是否可见（加载完成后才显示）
+  const [contentVisible, setContentVisible] = useState(!isInitialLoading);
+  
+  // 监听加载状态变化
+  useEffect(() => {
+    if (!showLoading && !contentVisible) {
+      // 如果加载完成但内容还未显示，则显示内容
+      const timer = setTimeout(() => {
+        setContentVisible(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else if (showLoading && contentVisible) {
+      // 如果开始加载但内容还在显示，则隐藏内容
+      setContentVisible(false);
+    }
+  }, [showLoading, contentVisible]);
+  
+  // 路由切换监听
+  useEffect(() => {
+    const handleStart = () => {
+      startLoading();
+    };
+    
+    const handleComplete = () => {
+      // 延迟结束加载状态，确保新页面已渲染
+      setTimeout(() => {
+        stopLoading();
+      }, 500);
+    };
+
+    router.events.on('routeChangeStart', handleStart);
+    router.events.on('routeChangeComplete', handleComplete);
+    router.events.on('routeChangeError', handleComplete);
+
+    return () => {
+      router.events.off('routeChangeStart', handleStart);
+      router.events.off('routeChangeComplete', handleComplete);
+      router.events.off('routeChangeError', handleComplete);
+    };
+  }, [router, startLoading, stopLoading]);
   
   // 添加性能监控
   useEffect(() => {
@@ -53,12 +102,16 @@ function MyApp({ Component, pageProps, router }: CustomAppProps) {
     }
   }, [router.pathname]);
 
-  // 包裹在AuthProvider和ThemeProvider中，确保认证状态和主题状态可用于整个应用
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <DynamicToastStyles />
-        <ToastContainer position="top-right" autoClose={3000} />
+    <>
+      {/* 使用加载屏幕组件 */}
+      <LoadingScreen isVisible={showLoading} />
+      
+      <DynamicToastStyles />
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      {/* 内容区域，使用类名控制渐变效果 */}
+      <div className={contentVisible ? 'content-visible' : 'content-hidden'}>
         {Component.noLayout ? (
           // 无布局的组件(如登录页)直接渲染
           <Component {...pageProps} key={pageKey} />
@@ -68,7 +121,20 @@ function MyApp({ Component, pageProps, router }: CustomAppProps) {
             <Component {...pageProps} key={pageKey} />
           </Layout>
         )}
-      </AuthProvider>
+      </div>
+    </>
+  );
+};
+
+// 主应用入口
+function MyApp(props: CustomAppProps) {
+  return (
+    <ThemeProvider>
+      <LoadingProvider>
+        <AuthProvider>
+          <AppContainer {...props} />
+        </AuthProvider>
+      </LoadingProvider>
     </ThemeProvider>
   );
 }

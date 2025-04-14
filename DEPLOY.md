@@ -2,6 +2,11 @@
 
 本文档提供 PicHub 在 Cloudflare 平台上的完整部署流程及常见问题解决方案。
 
+## 项目结构
+
+- `worker/` - Cloudflare Workers 后端代码
+- `page/` - Next.js 前端代码（部署到 Cloudflare Pages）
+
 ## 前提条件
 
 1. 拥有 Cloudflare 账户
@@ -15,7 +20,84 @@
 3. 创建新的 R2 存储桶，命名为 `pichub` 或你喜欢的名称
 4. 记下存储桶名称，稍后需要用到
 
-## 步骤二：安装依赖
+## 步骤二：设置 Cloudflare D1 数据库
+
+1. 创建 D1 数据库：
+
+```bash
+npx wrangler d1 create pichub
+```
+
+2. 记下输出中的数据库 ID，并更新 `wrangler.toml` 中的 D1 配置：
+
+```toml
+[[d1_databases]]
+binding = "DB"
+database_name = "pichub"
+database_id = "你的数据库ID"
+```
+
+3. 创建数据库表结构，创建一个名为 `schema.sql` 的文件，内容如下：
+
+```sql
+-- 用户表
+CREATE TABLE users (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	username TEXT UNIQUE NOT NULL,
+	PASSWORD TEXT NOT NULL,
+	email TEXT UNIQUE NOT NULL,
+	avatar TEXT,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	is_active BOOLEAN DEFAULT FALSE,
+	role TEXT DEFAULT 'user' CHECK (role IN ( 'user', 'admin' )) 
+);
+
+-- 文件表
+CREATE TABLE files (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER NOT NULL,
+	file_name TEXT NOT NULL,
+	original_name TEXT,
+	file_size INTEGER,
+	file_type TEXT,
+	uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY ( user_id ) REFERENCES users ( id ) 
+);
+
+-- 日志表
+CREATE TABLE logs (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	user_id INTEGER,
+	username TEXT,
+	action_type TEXT NOT NULL,
+	action_detail TEXT NOT NULL,
+	is_system BOOLEAN DEFAULT FALSE,
+	timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+4. 应用数据库结构：
+
+```bash
+npx wrangler d1 execute pichub --file=schema.sql
+```
+
+5. 创建管理员账户，创建名为 `admin.sql` 的文件，内容如下（注意：实际部署时请使用强密码）：
+
+```sql
+-- 用户名/密码：admin/123456
+INSERT INTO users (username, PASSWORD, email, is_active, role) 
+VALUES ('admin', '4f16faa8333ef26a31fa39e46c777e895a87ccf4655003f096c9eab3184a5f8d', 'admin@example.com', TRUE, 'admin');
+```
+
+6. 执行管理员账户创建脚本：
+
+```bash
+npx wrangler d1 execute pichub --file=admin.sql
+```
+
+## 步骤三：安装依赖
 
 克隆或下载项目后，在项目目录中运行：
 
@@ -23,7 +105,7 @@
 npm install
 ```
 
-## 步骤三：配置 Wrangler
+## 步骤四：配置 Wrangler
 
 1. 安装并登录 Wrangler CLI：
 
@@ -40,90 +122,72 @@ binding = "R2_BUCKET"
 bucket_name = "你的R2存储桶名称"  # 修改为你的实际R2存储桶名称
 ```
 
-## 步骤四：生成安全的 API Token
-
-执行以下命令生成一个安全的 API Token：
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-记下生成的随机字符串，这将是你的 API Token。
-
 ## 步骤五：配置并部署 Worker
 
-1. 将 API Token 添加到 Cloudflare 环境变量（**注意变量名必须正确**）：
-
-```bash
-# 正确的命令格式
-wrangler secret put UPLOAD_API_TOKEN
-# 在提示后输入你的API Token值
-```
-
-2. 部署 Worker：
+1. Worker 代码位于 `worker/` 目录，部署 Worker：
 
 ```bash
 npx wrangler deploy worker/index.js
 ```
 
-3. 确认 Worker 部署成功，并记下 Worker 的 URL（例如 `https://pichub.yourdomain.workers.dev`）
+或者，如果您的wrangler.toml已经正确配置，您可以简化命令为：
+```bash
+npx wrangler deploy
+```
+Wrangler会自动使用wrangler.toml中的入口点。
 
-## 步骤六：配置并部署 Pages 前端
+2. 确认 Worker 部署成功，并记下 Worker 的 URL（例如 `https://pichub.yourdomain.workers.dev`）
 
-1. 创建 Pages 的 Functions 目录结构（如果尚未创建）：
+## 步骤六：配置并部署 Next.js 前端到 Pages
+
+1. 进入 Next.js 前端目录：
 
 ```bash
-mkdir -p functions
+cd page
 ```
 
-2. 创建 `functions/_middleware.js` 文件，用于注入环境变量：
+2. 配置环境变量：
+   - 创建或修改 `.env.local` 文件，设置 API 端点：
+   ```
+   NEXT_PUBLIC_API_HOST=https://你的worker地址.workers.dev
+   ```
 
-```javascript
-export async function onRequest(context) {
-  const response = await context.next();
-  
-  const contentType = response.headers.get('content-type') || '';
-  if (!contentType.includes('text/html')) {
-    return response;
-  }
-  
-  const originalHtml = await response.text();
-  const apiEndpoint = context.env.API_ENDPOINT || '';
-  
-  const envScript = `
-    <script>
-      window.ENV = {
-        API_ENDPOINT: "${apiEndpoint}"
-      };
-    </script>
-  `;
-  
-  const modifiedHtml = originalHtml.replace('</head>', `${envScript}</head>`);
-  
-  return new Response(modifiedHtml, {
-    headers: response.headers,
-    status: response.status,
-    statusText: response.statusText
-  });
-}
-```
-
-3. 部署 Pages：
+3. 构建项目：
 
 ```bash
-npx wrangler pages deploy src --project-name=pichub
+npm run build
 ```
 
-4. **重要**：在 Cloudflare 控制台中为 Pages 设置环境变量
-   - 进入 Workers & Pages > 你的 Pages 项目 > Settings > Environment variables
-   - 添加变量 `API_ENDPOINT`，值设为你的 Worker URL（例如 `https://pichub.yourdomain.workers.dev`）
-   - 应用于 Production 环境
+4. 部署到 Cloudflare Pages：
+
+```bash
+npx wrangler pages deploy .next/
+```
 
 ## 步骤七：测试部署
 
 1. 访问你的 Pages URL（例如 `https://pichub.pages.dev`）
-2. 在认证界面输入你的 API Token
-3. 上传图片测试功能是否正常
+2. 使用管理员账户（用户名: admin，密码: 123456）登录
+3. **重要**: 首次登录后立即修改默认密码
+4. 上传图片测试功能是否正常
+
+## 数据库管理与维护
+
+以下是一些常用的 D1 数据库管理命令：
+
+```bash
+# 查看数据库中的表
+npx wrangler d1 execute pichub --command="SELECT name FROM sqlite_master WHERE type='table'"
+
+# 备份数据库
+npx wrangler d1 backup pichub ./backup.sql
+
+# 执行自定义 SQL 查询
+npx wrangler d1 execute pichub --command="SELECT * FROM users"
+
+# 在本地开发环境使用远程数据库
+npx wrangler dev --remote
+```
 
 ## 常见问题及解决方案
 
@@ -140,8 +204,8 @@ npx wrangler pages deploy src --project-name=pichub
 **症状**：上传时收到 401 错误。
 
 **解决方案**：
-- 确保使用了正确的 API Token 进行认证
-- 确保 Worker 中正确设置了 `UPLOAD_API_TOKEN` secret 变量
+- 确保使用了正确的凭据进行认证
+- 确保 Worker 中正确设置了必要的 secret 变量
 - 使用以下命令重新设置 secret：
   ```bash
   wrangler secret put UPLOAD_API_TOKEN
@@ -169,9 +233,18 @@ npx wrangler pages deploy src --project-name=pichub
 **症状**：前端显示"系统配置错误"。
 
 **解决方案**：
-- 确保在 Pages 项目中正确设置了 `API_ENDPOINT` 环境变量
-- 确保 `functions/_middleware.js` 正确注入环境变量
-- 检查前端代码是否正确读取 `window.ENV.API_ENDPOINT`
+- 确保在 `.env.local` 文件中正确设置了 `NEXT_PUBLIC_API_HOST` 环境变量
+- 检查前端代码是否正确使用环境变量
+
+### 6. 数据库相关错误
+
+**症状**：收到数据库连接或查询错误。
+
+**解决方案**：
+- 确保 D1 数据库已正确创建且 ID 与 wrangler.toml 中一致
+- 检查表结构是否正确创建
+- 验证是否有足够的权限执行数据库操作
+- 使用 `wrangler d1 execute` 命令进行调试查询
 
 ## 本地开发与测试
 
@@ -181,24 +254,7 @@ npx wrangler pages deploy src --project-name=pichub
 # 使用 Miniflare 测试 Worker
 npm run dev
 
-# 开发前端 Pages 组件
-npm run dev:pages
+# 启动 Next.js 开发服务器
+cd page
+npm run dev
 ```
-
-## 安全提示和最佳实践
-
-1. **API Token 管理**：
-   - 定期更换 API Token
-   - 不要在公共场合分享或暴露 Token
-
-2. **环境变量**：
-   - 敏感信息使用 Secrets 存储，不要使用普通环境变量
-   - Worker 和 Pages 需要分别设置各自的环境变量
-
-3. **错误处理**：
-   - 生产环境中不要返回详细的错误堆栈
-   - 为调试目的可添加详细日志，但上线前移除
-
-4. **定期更新**：
-   - 定期更新 wrangler 和其他依赖
-   - 关注 Cloudflare 安全公告 

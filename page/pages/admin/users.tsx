@@ -185,104 +185,114 @@ const AdminUsersPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-6 text-center">
-          <p className="text-gray-400">
+        <div className="bg-white/80 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center theme-transition">
+          <p className="text-gray-600 dark:text-gray-400 theme-transition">
             {searchQuery ? '没有找到匹配的用户' : '暂无用户'}
           </p>
         </div>
       ) : (
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden theme-transition">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-900/50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 theme-transition">
+              <thead className="bg-gray-100 dark:bg-gray-900/50 theme-transition">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     用户名
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     邮箱
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    角色
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    状态
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     注册时间
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
+                    状态
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
+                    角色
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800/10 divide-y divide-gray-700">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 theme-transition">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-700/30">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 theme-transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-700 rounded-full flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 overflow-hidden theme-transition">
                           {user.avatar ? (
-                            <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                            <img src={user.avatar} alt={user.username} className="h-10 w-10 object-cover" />
                           ) : (
-                            <span className="text-lg font-medium text-gray-300">{user.username.charAt(0).toUpperCase()}</span>
+                            <span className="font-medium">{user.username.charAt(0).toUpperCase()}</span>
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-200">{user.username}</div>
-                          <div className="text-sm text-gray-500">ID: {user.id}</div>
+                          <div className="text-sm font-medium text-gray-800 dark:text-white theme-transition">{user.username}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400 theme-transition">ID: {user.id}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {user.email || '未设置'}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition">{user.email || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-purple-900/50 text-purple-300' 
-                          : 'bg-gray-800 text-gray-300'
-                      }`}>
-                        {user.role === 'admin' ? '管理员' : '用户'}
-                      </span>
+                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-gray-500 theme-transition">
+                        {new Date(user.created_at).toLocaleTimeString()}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         user.is_active 
-                          ? 'bg-green-900/50 text-green-300' 
-                          : 'bg-red-900/50 text-red-300'
-                      }`}>
-                        {user.is_active ? '已激活' : '未激活'}
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+                      } theme-transition`}>
+                        {user.is_active ? '已激活' : '已停用'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {new Date(user.created_at || '').toLocaleDateString()}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.role === 'admin' 
+                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' 
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      } theme-transition`}>
+                        {user.role === 'admin' ? '管理员' : '普通用户'}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      <Button
-                        size="sm"
-                        variant={user.is_active ? 'warning' : 'success'}
-                        onClick={() => handleToggleUserActive(user)}
-                        disabled={actionLoading || user.role === 'admin'}
-                      >
-                        {user.is_active ? '停用' : '激活'}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="info"
-                        onClick={() => openPasswordModal(user)}
-                        disabled={actionLoading}
-                      >
-                        重置密码
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => openDeleteModal(user)}
-                        disabled={actionLoading || user.role === 'admin'}
-                      >
-                        删除
-                      </Button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleToggleUserActive(user)}
+                          disabled={actionLoading}
+                          className={`px-2 py-1 rounded text-xs ${
+                            user.is_active 
+                              ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50' 
+                              : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                          } transition theme-transition`}
+                        >
+                          {user.is_active ? '停用' : '激活'}
+                        </button>
+                        <button
+                          onClick={() => openPasswordModal(user)}
+                          disabled={actionLoading}
+                          className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-1 rounded text-xs transition theme-transition"
+                        >
+                          重置密码
+                        </button>
+                        {user.role !== 'admin' && (
+                          <button
+                            onClick={() => openDeleteModal(user)}
+                            disabled={actionLoading}
+                            className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-2 py-1 rounded text-xs transition theme-transition"
+                          >
+                            删除
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -294,76 +304,84 @@ const AdminUsersPage = () => {
       
       {/* 模态框 */}
       {isModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden theme-transition">
             {modalType === 'password' ? (
               <>
-                <h3 className="text-xl font-semibold text-gray-200 mb-4">
-                  修改 {selectedUser.username} 的密码
-                </h3>
-                
-                {passwordError && (
-                  <div className="mb-4 bg-red-900/30 border border-red-800 text-red-400 px-4 py-2 rounded-md text-sm">
-                    {passwordError}
-                  </div>
-                )}
-                
-                <div className="space-y-4">
-                  <Input
-                    type="password"
-                    label="新密码"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    fullWidth
-                    autoComplete="new-password"
-                    name="new-password"
-                  />
-                  
-                  <Input
-                    type="password"
-                    label="确认新密码"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    fullWidth
-                    autoComplete="new-password"
-                    name="confirm-new-password"
-                  />
+                <div className="bg-indigo-500 px-6 py-4">
+                  <h3 className="text-white text-lg font-medium">重置密码</h3>
+                  <p className="text-indigo-200 text-sm">用户: {selectedUser.username}</p>
                 </div>
-                
-                <div className="mt-6 flex justify-end space-x-3">
-                  <Button variant="secondary" onClick={closeModal}>
-                    取消
-                  </Button>
-                  <Button 
-                    variant="primary" 
-                    onClick={handlePasswordChange}
-                    loading={actionLoading}
-                  >
-                    保存
-                  </Button>
+                <div className="p-6">
+                  <div className="mb-4">
+                    <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
+                      新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 theme-transition"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
+                      确认新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 theme-transition"
+                    />
+                  </div>
+                  {passwordError && (
+                    <div className="mb-4 text-sm text-red-600 dark:text-red-400 theme-transition">
+                      {passwordError}
+                    </div>
+                  )}
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 theme-transition"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handlePasswordChange}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {actionLoading ? '处理中...' : '确认'}
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
               <>
-                <h3 className="text-xl font-semibold text-gray-200 mb-4">
-                  删除用户
-                </h3>
-                
-                <p className="text-gray-300 mb-6">
-                  您确定要删除用户 <span className="font-semibold text-red-400">{selectedUser.username}</span> 吗？此操作无法撤销，该用户的所有文件也将被删除。
-                </p>
-                
-                <div className="flex justify-end space-x-3">
-                  <Button variant="secondary" onClick={closeModal}>
-                    取消
-                  </Button>
-                  <Button 
-                    variant="danger" 
-                    onClick={handleDeleteUser}
-                    loading={actionLoading}
-                  >
-                    确认删除
-                  </Button>
+                <div className="bg-red-500 px-6 py-4">
+                  <h3 className="text-white text-lg font-medium">删除用户</h3>
+                  <p className="text-red-200 text-sm">此操作不可撤销</p>
+                </div>
+                <div className="p-6">
+                  <p className="text-gray-700 dark:text-gray-300 mb-4 theme-transition">
+                    您确定要删除用户 <span className="font-bold">{selectedUser.username}</span> 吗？该操作将永久删除该用户的所有数据，无法恢复。
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={closeModal}
+                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 theme-transition"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handleDeleteUser}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {actionLoading ? '处理中...' : '确认删除'}
+                    </button>
+                  </div>
                 </div>
               </>
             )}

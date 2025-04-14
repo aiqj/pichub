@@ -32,6 +32,35 @@ class MyDocument extends Document {
           <meta name="theme-color" content="#000000" />
         </Head>
         <body>
+          {/* 主题初始化脚本 - 在DOM加载前执行，防止闪烁 */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  // 首先尝试从localStorage获取主题设置
+                  const storedTheme = localStorage.getItem('theme');
+                  
+                  // 如果已有明确的主题设置，使用它
+                  if (storedTheme === 'dark' || storedTheme === 'light') {
+                    if (storedTheme === 'dark') {
+                      document.documentElement.classList.add('dark');
+                    } else {
+                      document.documentElement.classList.remove('dark');
+                    }
+                    return;
+                  }
+                  
+                  // 否则检查系统主题偏好
+                  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  if (prefersDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                })();
+              `,
+            }}
+          />
           <Main />
           <NextScript />
         </body>

@@ -80,9 +80,9 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
   };
   
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-indigo-900/20 hover:border-indigo-500/50">
+    <div className="bg-white/90 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden transition-all duration-300 hover:shadow-indigo-500/20 dark:hover:shadow-indigo-900/20 hover:border-indigo-500/50 theme-transition">
       <div 
-        className="relative aspect-video bg-gray-900 overflow-hidden"
+        className="relative aspect-video bg-gray-100 dark:bg-gray-900 overflow-hidden theme-transition"
         style={{ cursor: onPreview ? 'zoom-in' : 'default' }}
         onClick={onPreview}
       >
@@ -96,7 +96,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
         )}
         
         {/* 文件类型显示 */}
-        <div className="absolute top-2 right-2 bg-black/70 text-xs px-2 py-1 rounded-full text-indigo-400 border border-indigo-500/40">
+        <div className="absolute top-2 right-2 bg-indigo-100/90 dark:bg-black/70 text-xs px-2 py-1 rounded-full text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/40 theme-transition">
           {file.file_type.split('/')[1].toUpperCase()}
         </div>
         
@@ -114,11 +114,11 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
       
       <div className="p-4">
         <div className="flex flex-col space-y-2">
-          <h3 className="font-medium text-lg text-gray-200 truncate" title={file.original_name}>
+          <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 truncate theme-transition" title={file.original_name}>
             {file.original_name}
           </h3>
           
-          <div className="flex justify-between text-xs text-gray-400">
+          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 theme-transition">
             <span>{formatFileSize(file.file_size)}</span>
             <span>{formatDate(file.uploaded_at)}</span>
           </div>
@@ -165,9 +165,9 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
           </div>
           
           {showCopyOptions && (
-            <div className="mt-3 space-y-2 bg-gray-900/50 p-3 rounded-md border border-gray-700">
+            <div className="mt-3 space-y-2 bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-md border border-gray-300 dark:border-gray-700 theme-transition">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-300">URL:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 theme-transition">URL:</span>
                 <Button
                   size="sm"
                   variant="info"
@@ -178,7 +178,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-300">HTML:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 theme-transition">HTML:</span>
                 <Button
                   size="sm"
                   variant="info"
@@ -189,7 +189,7 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-300">Markdown:</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300 theme-transition">Markdown:</span>
                 <Button
                   size="sm"
                   variant="info"

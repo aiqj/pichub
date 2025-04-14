@@ -212,9 +212,9 @@ const ProfilePage = () => {
         <div className="w-full max-w-5xl px-4">
           <h1 className="hidden text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-8">个人资料</h1>
           
-          <div className="bg-gray-800/40 backdrop-blur-sm border border-gray-700 rounded-xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 px-6 py-4 border-b border-gray-700">
-              <h2 className="text-xl font-semibold text-white">账户信息</h2>
+          <div className="bg-white/80 dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden theme-transition">
+            <div className="bg-gradient-to-r from-indigo-100/80 to-purple-100/80 dark:from-indigo-900/40 dark:to-purple-900/40 px-6 py-4 border-b border-gray-200 dark:border-gray-700 theme-transition">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white theme-transition">账户信息</h2>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6">
@@ -223,7 +223,7 @@ const ProfilePage = () => {
                 <div className="flex flex-col items-center space-y-4">
                   <div className="relative group">
                     <div
-                      className="w-40 h-40 rounded-full cursor-pointer overflow-hidden border-4 border-indigo-500/50 p-1 bg-gray-700 flex items-center justify-center hover:opacity-90 transition-all shadow-lg group-hover:shadow-indigo-500/30"
+                      className="w-40 h-40 rounded-full cursor-pointer overflow-hidden border-4 border-indigo-500/50 p-1 bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:opacity-90 transition-all shadow-lg group-hover:shadow-indigo-500/30 theme-transition"
                       onClick={handleAvatarClick}
                     >
                       {avatarPreview ? (
@@ -233,7 +233,7 @@ const ProfilePage = () => {
                           className="w-full h-full object-cover rounded-full"
                         />
                       ) : (
-                        <div className="text-center text-gray-400">
+                        <div className="text-center text-gray-500 dark:text-gray-400 theme-transition">
                           <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
@@ -257,8 +257,8 @@ const ProfilePage = () => {
                   </div>
                   
                   <div className="text-center">
-                    <h3 className="text-lg font-medium text-indigo-400">{user?.username || "用户"}</h3>
-                    <p className="text-gray-400 text-sm">{user?.role === 'admin' ? '管理员' : '普通用户'}</p>
+                    <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 theme-transition">{user?.username || "用户"}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm theme-transition">{user?.role === 'admin' ? '管理员' : '普通用户'}</p>
                   </div>
                 </div>
                 
@@ -266,27 +266,27 @@ const ProfilePage = () => {
                 <div className="md:col-span-2 space-y-6">
                   {/* 基本信息部分 */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-indigo-300 border-b border-gray-700 pb-2">基本信息</h3>
+                    <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-300 border-b border-gray-200 dark:border-gray-700 pb-2 theme-transition">基本信息</h3>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {/* 用户名（不可修改，只显示） */}
                       <div>
-                        <label htmlFor="username" className="block text-gray-300 text-sm font-medium mb-2">
+                        <label htmlFor="username" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
                           用户名
                         </label>
                         <input
                           type="text"
                           id="username"
                           value={user?.username || ''}
-                          className="w-full px-4 py-2 rounded-md bg-gray-700/50 text-gray-300 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-not-allowed"
+                          className="w-full px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-not-allowed theme-transition"
                           disabled
                         />
-                        <p className="mt-1 text-xs text-gray-400">用户名不可修改</p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 theme-transition">用户名不可修改</p>
                       </div>
 
                       {/* 邮箱 */}
                       <div>
-                        <label htmlFor="email" className="block text-gray-300 text-sm font-medium mb-2">
+                        <label htmlFor="email" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
                           邮箱
                         </label>
                         <input
@@ -295,23 +295,23 @@ const ProfilePage = () => {
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 rounded-md bg-gray-700/50 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700/50 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent theme-transition"
                           placeholder="your@email.com"
                         />
-                        {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
+                        {errors.email && <p className="mt-1 text-xs text-red-600 dark:text-red-400 theme-transition">{errors.email}</p>}
                       </div>
                     </div>
                   </div>
                   
                   {/* 修改密码部分 */}
                   <div className="space-y-4 pt-4">
-                    <h3 className="text-lg font-medium text-indigo-300 border-b border-gray-700 pb-2">修改密码</h3>
-                    <p className="text-gray-400 text-sm">如需修改密码，请填写以下信息</p>
+                    <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-300 border-b border-gray-200 dark:border-gray-700 pb-2 theme-transition">修改密码</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm theme-transition">如需修改密码，请填写以下信息</p>
 
                     <div className="space-y-4">
                       {/* 当前密码 */}
                       <div>
-                        <label htmlFor="currentPassword" className="block text-gray-300 text-sm font-medium mb-2">
+                        <label htmlFor="currentPassword" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
                           当前密码
                         </label>
                         <input
@@ -320,16 +320,16 @@ const ProfilePage = () => {
                           name="currentPassword"
                           value={formData.currentPassword}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-2 rounded-md bg-gray-700/50 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700/50 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent theme-transition"
                           placeholder="••••••••"
                         />
-                        {errors.currentPassword && <p className="mt-1 text-xs text-red-400">{errors.currentPassword}</p>}
+                        {errors.currentPassword && <p className="mt-1 text-xs text-red-600 dark:text-red-400 theme-transition">{errors.currentPassword}</p>}
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {/* 新密码 */}
                         <div>
-                          <label htmlFor="newPassword" className="block text-gray-300 text-sm font-medium mb-2">
+                          <label htmlFor="newPassword" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
                             新密码
                           </label>
                           <input
@@ -338,15 +338,15 @@ const ProfilePage = () => {
                             name="newPassword"
                             value={formData.newPassword}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 rounded-md bg-gray-700/50 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700/50 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent theme-transition"
                             placeholder="••••••••"
                           />
-                          {errors.newPassword && <p className="mt-1 text-xs text-red-400">{errors.newPassword}</p>}
+                          {errors.newPassword && <p className="mt-1 text-xs text-red-600 dark:text-red-400 theme-transition">{errors.newPassword}</p>}
                         </div>
 
                         {/* 确认新密码 */}
                         <div>
-                          <label htmlFor="confirmPassword" className="block text-gray-300 text-sm font-medium mb-2">
+                          <label htmlFor="confirmPassword" className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2 theme-transition">
                             确认新密码
                           </label>
                           <input
@@ -355,10 +355,10 @@ const ProfilePage = () => {
                             name="confirmPassword"
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 rounded-md bg-gray-700/50 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="w-full px-4 py-2 rounded-md bg-white dark:bg-gray-700/50 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent theme-transition"
                             placeholder="••••••••"
                           />
-                          {errors.confirmPassword && <p className="mt-1 text-xs text-red-400">{errors.confirmPassword}</p>}
+                          {errors.confirmPassword && <p className="mt-1 text-xs text-red-600 dark:text-red-400 theme-transition">{errors.confirmPassword}</p>}
                         </div>
                       </div>
                     </div>
@@ -367,7 +367,7 @@ const ProfilePage = () => {
               </div>
               
               {/* 提交按钮 */}
-              <div className="mt-8 pt-4 border-t border-gray-700 flex justify-end">
+              <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end theme-transition">
                 <button
                   type="submit"
                   className={`px-8 py-3 rounded-md font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all transform hover:scale-105 ${

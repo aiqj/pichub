@@ -617,170 +617,171 @@ const StorageChart: React.FC = () => {
   const stats = getDataStats();
 
   return (
-    <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-xl mt-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
+    <div className="mt-10">
+      {!loading && !error && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
             存储状态
           </h2>
-          {stats && (
-            <span className="ml-2 text-xs text-gray-400">更新时间: {stats.date}</span>
-          )}
-        </div>
-        
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => setChartType('area')}
-            className={`px-3 py-1 rounded-md ${chartType === 'area' 
-              ? 'bg-indigo-600 text-white' 
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-          >
-            面积图
-          </button>
-          <button 
-            onClick={() => setChartType('bar')}
-            className={`px-3 py-1 rounded-md ${chartType === 'bar' 
-              ? 'bg-indigo-600 text-white' 
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-          >
-            柱状图
-          </button>
-          <button 
-            onClick={() => setChartType('composed')}
-            className={`px-3 py-1 rounded-md ${chartType === 'composed' 
-              ? 'bg-indigo-600 text-white' 
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-          >
-            组合图
-          </button>
-        </div>
-      </div>
-      
-      {/* 新增的统计卡片样式 */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-indigo-900/30 rounded-full p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+          
+          <div className="flex justify-between mb-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setChartType('area')}
+                className={`px-4 py-1 rounded-md text-sm ${
+                  chartType === 'area' 
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                } hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors theme-transition`}
+              >
+                面积图
+              </button>
+              <button
+                onClick={() => setChartType('bar')}
+                className={`px-4 py-1 rounded-md text-sm ${
+                  chartType === 'bar' 
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                } hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors theme-transition`}
+              >
+                柱状图
+              </button>
+              <button
+                onClick={() => setChartType('composed')}
+                className={`px-4 py-1 rounded-md text-sm ${
+                  chartType === 'composed' 
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-700' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700'
+                } hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors theme-transition`}
+              >
+                组合图
+              </button>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-100/70 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 theme-transition">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-2 theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <h3 className="text-gray-400 text-sm">总文件</h3>
-                  <div className="relative group ml-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                      存储在R2中的文件总数
-                    </div>
+                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">总文件数</h3>
+                <div className="relative group ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                    所有用户上传的文件总数
                   </div>
                 </div>
-                <p className="text-indigo-400 font-medium">{stats.objectCount}</p>
               </div>
+              <p className="text-2xl font-semibold text-gray-700 dark:text-gray-200 theme-transition">
+                {loading ? (
+                  <span className="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 animate-pulse rounded theme-transition"></span>
+                ) : chartData.length > 0 ? (
+                  chartData[chartData.length - 1].objectCount
+                ) : (
+                  '0'
+                )}
+              </p>
             </div>
-          </div>
-          
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-pink-900/30 rounded-full p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+            
+            <div className="bg-gray-100/70 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 theme-transition">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-pink-600 dark:text-pink-400 mr-2 theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                 </svg>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <h3 className="text-gray-400 text-sm">总存储</h3>
-                  <div className="relative group ml-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                      每月10GB免费存储容量，超出部分将收费
-                    </div>
+                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">总存储量</h3>
+                <div className="relative group ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                    所有文件占用的总存储空间（包含元数据）
                   </div>
                 </div>
-                <p className={`font-medium ${
-                  // 使用chartData最后一项的原始字节数值进行比较
-                  chartData.length > 0 ? (
-                    chartData[chartData.length - 1].objectSize < 5 * 1000 * 1000 * 1000 ? '' : 
-                    (chartData[chartData.length - 1].objectSize < 7.5 * 1000 * 1000 * 1000 ? 'text-blue-400' : 
-                    (chartData[chartData.length - 1].objectSize < 10 * 1000 * 1000 * 1000 ? 'text-amber-400' : 'text-red-400'))
-                  ) : ''
-                }`}>
-                  {stats.objectSize}
-                </p>
               </div>
+              <p className="text-2xl font-semibold text-gray-700 dark:text-gray-200 theme-transition">
+                {loading ? (
+                  <span className="inline-block w-16 h-6 bg-gray-200 dark:bg-gray-700 animate-pulse rounded theme-transition"></span>
+                ) : chartData.length > 0 ? (
+                  formatBytes(chartData[chartData.length - 1].objectSize)
+                ) : (
+                  '0 Bytes'
+                )}
+              </p>
             </div>
-          </div>
-          
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-blue-900/30 rounded-full p-2 flex items-center justify-center" style={{ width: "32px", height: "32px" }}>
-                <span className="text-blue-400 font-bold">A</span>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <h3 className="text-gray-400 text-sm">A类</h3>
-                  <div className="relative group ml-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                      A类操作主要包括创建和管理存储资源。每月100万次免费
-                    </div>
+            
+            <div className="bg-gray-100/70 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 theme-transition">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 dark:text-amber-400 mr-2 theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">API请求</h3>
+                <div className="relative group ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                    本月API请求次数统计
                   </div>
                 </div>
-                <p className={`font-medium ${
-                  requestCounts.classA < 500000 ? '' : 
-                  (requestCounts.classA < 750000 ? 'text-blue-400' : 
-                  (requestCounts.classA < 1000000 ? 'text-amber-400' : 'text-red-400'))
-                }`}>{requestCounts.classA}</p>
               </div>
-            </div>
-          </div>
-          
-          <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700">
-            <div className="flex items-center space-x-3">
-              <div className="bg-purple-900/30 rounded-full p-2 flex items-center justify-center" style={{ width: "32px", height: "32px" }}>
-                <span className="text-purple-400 font-bold">B</span>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <h3 className="text-gray-400 text-sm">B类</h3>
-                  <div className="relative group ml-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-300 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-gray-800 text-xs text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                      B类操作主要包括查看和查询存储资源。每月1000万次免费
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div>
+                  <div className="flex items-center">
+                    <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">A类</h3>
+                    <div className="relative group ml-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                        A类操作主要包括写入和删除存储资源。每月100万次免费
+                      </div>
                     </div>
                   </div>
+                  <p className={`font-medium ${
+                    requestCounts.classA < 500000 ? 'text-gray-700 dark:text-gray-200' : 
+                    (requestCounts.classA < 750000 ? 'text-blue-600 dark:text-blue-400' : 
+                    (requestCounts.classA < 1000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
+                  } theme-transition`}>{requestCounts.classA}</p>
                 </div>
-                <p className={`font-medium ${
-                  requestCounts.classB < 5000000 ? '' : 
-                  (requestCounts.classB < 7500000 ? 'text-blue-400' : 
-                  (requestCounts.classB < 10000000 ? 'text-amber-400' : 'text-red-400'))
-                }`}>{requestCounts.classB}</p>
+                
+                <div>
+                  <div className="flex items-center">
+                    <h3 className="text-gray-600 dark:text-gray-400 text-sm theme-transition">B类</h3>
+                    <div className="relative group ml-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-help theme-transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-200 p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 theme-transition">
+                        B类操作主要包括查看和查询存储资源。每月1000万次免费
+                      </div>
+                    </div>
+                  </div>
+                  <p className={`font-medium ${
+                    requestCounts.classB < 5000000 ? 'text-gray-700 dark:text-gray-200' : 
+                    (requestCounts.classB < 7500000 ? 'text-blue-600 dark:text-blue-400' : 
+                    (requestCounts.classB < 10000000 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'))
+                  } theme-transition`}>{requestCounts.classB}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
       
-      <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-700 h-[400px]">
+      <div className="bg-gray-100/70 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700 h-[400px] theme-transition">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>
       </div>
       
-      <div className="mt-3 text-sm text-gray-400 hidden">
+      <div className="mt-3 text-sm text-gray-600 dark:text-gray-400 hidden theme-transition">
         <p>* 图表显示存储变化趋势，按北京时间（GMT+8）排序</p>
         <p>* 对象大小 = 元数据大小 + 有效载荷大小</p>
         {!loading && error && (
-          <p className="text-red-400">* 错误: {error}</p>
+          <p className="text-red-600 dark:text-red-400 theme-transition">* 错误: {error}</p>
         )}
       </div>
     </div>

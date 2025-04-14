@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface DropdownPosition {
   top: number;
@@ -16,6 +17,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { isAuthenticated, user, logout, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   // 添加客户端渲染检测
   const [isClient, setIsClient] = useState(false);
@@ -23,7 +25,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition>({ top: 0, left: 0 });
   const userAvatarRef = useRef<HTMLDivElement>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   // 在组件挂载后设置isClient为true
   useEffect(() => {
@@ -147,19 +148,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // 如果正在客户端并且认证状态加载中，显示加载状态
   if (isClient && loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white theme-transition">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-        <p className="text-gray-400 ml-3">正在载入...</p>
+        <p className="text-gray-600 dark:text-gray-400 ml-3">正在载入...</p>
       </div>
     );
   }
 
   // 已通过所有重定向检查，渲染正常布局
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white flex flex-col theme-transition">
       {/* 导航栏 - 只在用户登录后显示 */}
       {(!isClient || isAuthenticated) && !isAuthPage && (
-        <nav className="bg-black/30 backdrop-blur-sm border-b border-gray-700">
+        <nav className="bg-white/80 dark:bg-black/30 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 theme-transition">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
@@ -174,8 +175,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     href="/"
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      router.pathname === '/' ? 'text-indigo-400' : 'text-gray-300 hover:text-indigo-300'
-                    }`}
+                      router.pathname === '/' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                    } theme-transition`}
                   >
                     上传
                   </Link>
@@ -183,8 +184,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Link
                     href="/files"
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      router.pathname === '/files' ? 'text-indigo-400' : 'text-gray-300 hover:text-indigo-300'
-                    }`}
+                      router.pathname === '/files' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                    } theme-transition`}
                   >
                     我的文件
                   </Link>
@@ -193,12 +194,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Link
                       href="/admin"
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        isAdminRoute ? 'text-indigo-400' : 'text-gray-300 hover:text-indigo-300'
-                      }`}
+                        isAdminRoute ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                      } theme-transition`}
                     >
                       管理面板
                     </Link>
                   )}
+
+                  {/* 主题切换按钮 */}
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="flex items-center justify-center h-9 w-9 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 ease-in-out focus:outline-none theme-transition"
+                    aria-label={theme === 'dark' ? "切换到浅色模式" : "切换到深色模式"}
+                  >
+                    {theme === 'dark' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06z"/>
+                      </svg>
+                    )}
+                  </button>
                   
                   <div className="relative px-3 py-2">
                     <div 
@@ -206,7 +225,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       className="relative group cursor-pointer flex items-center"
                       onClick={handleToggleDropdown}
                     >
-                      <div className="h-8 w-8 rounded-full border border-gray-600 hover:border-indigo-400 flex items-center justify-center overflow-hidden bg-gray-700">
+                      <div className="h-8 w-8 rounded-full border border-gray-300 hover:border-indigo-400 dark:border-gray-600 dark:hover:border-indigo-400 flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-gray-700 theme-transition">
                         {user?.avatar ? (
                           <img
                             src={user.avatar}
@@ -214,12 +233,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             className="h-8 w-8 object-cover"
                           />
                         ) : (
-                          <span className="text-sm font-medium text-gray-300">
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-300 theme-transition">
                             {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
                           </span>
                         )}
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-xs text-gray-300 px-2 py-1 rounded whitespace-nowrap">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded whitespace-nowrap shadow-md theme-transition">
                         {user?.username || "用户"}
                       </div>
                     </div>
@@ -228,7 +247,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     {isClient && dropdownOpen && createPortal(
                       <div className="fixed z-[99999]" style={{ top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
                         <div 
-                          className="absolute w-48 rounded-md shadow-lg py-1 bg-gray-800 border border-gray-700 dropdown-menu transform transition-transform duration-200 ease-out origin-top-right"
+                          className="absolute w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dropdown-menu transform transition-transform duration-200 ease-out origin-top-right theme-transition"
                           style={{
                             top: `${dropdownPosition.top}px`,
                             left: `${dropdownPosition.left}px`,
@@ -238,7 +257,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         >
                           {/* 箭头指示器 */}
                           <div 
-                            className="absolute w-3 h-3 bg-gray-800 border-t border-l border-gray-700 transform rotate-45"
+                            className="absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-gray-200 dark:border-gray-700 transform rotate-45 theme-transition"
                             style={{ 
                               top: '-6px', 
                               left: `${dropdownPosition.avatarLeft - dropdownPosition.left - 6}px`,
@@ -247,7 +266,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                           
                           <div className="relative z-10"> {/* 确保内容在箭头上方 */}
                             <div 
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-indigo-400 cursor-pointer dropdown-menu-item"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer dropdown-menu-item theme-transition"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDropdownOpen(false);
@@ -265,7 +284,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 setDropdownOpen(false);
                                 handleLogout();
                               }}
-                              className="flex w-full items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-indigo-400 dropdown-menu-item"
+                              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 dropdown-menu-item theme-transition"
                             >
                               <svg className="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -291,18 +310,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* 页脚 */}
-      <footer className="bg-black/30 backdrop-blur-sm border-t border-gray-700 py-6 mt-auto">
+      <footer className="bg-white/80 dark:bg-black/30 backdrop-blur-sm border-t border-gray-200 dark:border-gray-700 py-6 mt-auto theme-transition">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center md:flex-row md:justify-between">
             <div className="mb-4 md:mb-0">
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400 theme-transition">
                 &copy; {new Date().getFullYear()} PicHub. 保留所有权利。
               </p>
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="text-gray-400 hover:text-indigo-400">
+              <a href="#" className="text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 theme-transition">
                 <span className="sr-only">Github</span>
-                <svg className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M536.380952 146.285714h146.285715l341.333333 292.571429-195.047619 292.571428-474.453333-79.091809L292.571429 1024H146.285714l24.380953-146.285714h-146.285715l8.143238-48.761905h146.285715L195.047619 731.428571H48.761905l8.143238-48.761904h146.285714l16.237714-97.52381h-146.285714l8.143238-48.761905h146.285715L243.809524 438.857143H97.52381l8.143238-48.761905h146.285714L268.190476 292.571429h-146.285714l8.143238-48.761905h146.285714L292.571429 146.285714h97.523809l146.285714-146.285714v146.285714z m-165.790476 409.892572l412.184381 68.705524 112.152381-168.228572L646.582857 243.809524H422.619429l-52.077715 312.368762zM585.142857 390.095238c-26.916571 0-48.761905-17.749333-48.761905-44.665905s-3.023238-44.665905 23.893334-44.665904c26.965333 0 98.011429 36.08381 98.011428 63.000381S612.059429 390.095238 585.142857 390.095238z" fill="#6366f1"></path></svg>
+                <svg className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M536.380952 146.285714h146.285715l341.333333 292.571429-195.047619 292.571428-474.453333-79.091809L292.571429 1024H146.285714l24.380953-146.285714h-146.285715l8.143238-48.761905h146.285715L195.047619 731.428571H48.761905l8.143238-48.761904h146.285714l16.237714-97.52381h-146.285714l8.143238-48.761905h146.285715L243.809524 438.857143H97.52381l8.143238-48.761905h146.285714L268.190476 292.571429h-146.285714l8.143238-48.761905h146.285714L292.571429 146.285714h97.523809l146.285714-146.285714v146.285714z m-165.790476 409.892572l412.184381 68.705524 112.152381-168.228572L646.582857 243.809524H422.619429l-52.077715 312.368762zM585.142857 390.095238c-26.916571 0-48.761905-17.749333-48.761905-44.665905s-3.023238-44.665905 23.893334-44.665904c26.965333 0 98.011429 36.08381 98.011428 63.000381S612.059429 390.095238 585.142857 390.095238z" fill="currentColor"></path></svg>
               </a>
             </div>
           </div>

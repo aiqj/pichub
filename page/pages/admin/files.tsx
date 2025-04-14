@@ -161,7 +161,7 @@ const AdminFilesPage = () => {
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
           <div className="w-full sm:w-48">
             <select
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-gray-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-700 dark:text-gray-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 theme-transition"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
             >
@@ -193,150 +193,181 @@ const AdminFilesPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
         </div>
       ) : error ? (
-        <div className="bg-red-900/30 border border-red-800 text-red-400 px-6 py-4 rounded-md">
+        <div className="bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 px-6 py-4 rounded-md theme-transition">
           {error}
         </div>
       ) : filteredFiles.length === 0 ? (
-        <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-6 text-center">
-          <p className="text-gray-400">
+        <div className="bg-white/80 dark:bg-gray-800/30 border border-gray-200 dark:border-gray-700 rounded-lg p-6 text-center theme-transition">
+          <p className="text-gray-600 dark:text-gray-400 theme-transition">
             {searchQuery || filterType !== 'all' ? '没有找到匹配的文件' : '暂无文件'}
           </p>
         </div>
       ) : (
-        <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-lg overflow-hidden">
+        <div className="bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden theme-transition">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-900/50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 theme-transition">
+              <thead className="bg-gray-100 dark:bg-gray-900/50 theme-transition">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     文件名
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    用户
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
+                    上传者
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     类型
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     大小
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     上传时间
                   </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider theme-transition">
                     操作
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800/10 divide-y divide-gray-700">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 theme-transition">
                 {filteredFiles.map((file) => (
-                  <React.Fragment key={file.id}>
-                    <tr className="hover:bg-gray-700/30">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-200">
-                        {file.original_name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {file.username || '未知用户'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900/50 text-blue-300">
-                          {file.file_type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {formatFileSize(file.file_size)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        {new Date(file.uploaded_at).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a
-                          href={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-indigo-400 hover:text-indigo-300 mr-4"
-                        >
-                          查看
-                        </a>
+                  <tr key={file.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 theme-transition">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 bg-gray-100 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600 overflow-hidden flex items-center justify-center theme-transition">
+                          {file.file_type.startsWith('image/') ? (
+                            <img 
+                              className="h-10 w-10 object-cover" 
+                              src={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`} 
+                              alt={file.original_name}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1pbWFnZSI+PHJlY3Qgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiB4PSIzIiB5PSIzIiByeD0iMiIgcnk9IjIiLz48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSIvPjxwb2x5bGluZSBwb2ludHM9IjIxIDEzLjg1IDE2IDEwLjUgNSAyMSIvPjwvc3ZnPg==';
+                                target.style.opacity = '0.5';
+                                target.style.padding = '2px';
+                              }}
+                            />
+                          ) : (
+                            <div className="text-gray-600 dark:text-gray-400 flex items-center justify-center theme-transition">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-800 dark:text-white theme-transition">{file.original_name}</div>
+                          <div className="text-xs text-gray-500 theme-transition truncate max-w-xs">
+                            {file.file_name}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition">{file.username || '未知用户'}</div>
+                      <div className="text-xs text-gray-500 theme-transition">ID: {file.user_id}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 theme-transition">
+                        {file.file_type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 theme-transition">
+                      {formatFileSize(file.file_size)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 theme-transition">
+                        {new Date(file.upload_time).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-gray-500 theme-transition">
+                        {new Date(file.upload_time).toLocaleTimeString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
                         {file.file_type.startsWith('image/') && (
                           <button
                             onClick={() => handlePreviewImage(file)}
-                            className="text-cyan-400 hover:text-cyan-300 mr-4"
+                            className="bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 px-2 py-1 rounded text-xs transition theme-transition"
                           >
                             预览
                           </button>
                         )}
                         <button
                           onClick={() => toggleShareOptions(file.id)}
-                          className="text-green-400 hover:text-green-300 mr-4"
+                          className="bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 px-2 py-1 rounded text-xs transition theme-transition"
                         >
-                          {sharingFileId === file.id ? '隐藏分享' : '分享'}
+                          分享
                         </button>
-                        <Button
-                          size="sm"
-                          variant="danger"
+                        <button
                           onClick={() => openDeleteModal(file)}
+                          className="bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 px-2 py-1 rounded text-xs transition theme-transition"
                         >
                           删除
-                        </Button>
-                      </td>
-                    </tr>
-                    {sharingFileId === file.id && (
-                      <tr className="bg-gray-800/50">
-                        <td colSpan={6} className="px-6 py-4">
+                        </button>
+                      </div>
+                      
+                      {/* 分享选项面板 */}
+                      {sharingFileId === file.id && (
+                        <div className="absolute mt-2 right-8 rounded-md bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-10 w-72 text-left theme-transition">
                           <div className="space-y-3">
-                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-gray-300 font-medium">直接链接</span>
-                                <Button
-                                  size="sm"
-                                  variant="info"
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).url, `url-${file.id}`)}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">直接链接</label>
+                              <div className="flex">
+                                <input 
+                                  type="text" 
+                                  readOnly 
+                                  value={getFileShareLinks(file).url}
+                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
+                                />
+                                <button 
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).url, 'url')} 
+                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
                                 >
-                                  {copyStatus[`url-${file.id}`] ? '已复制！' : '复制'}
-                                </Button>
-                              </div>
-                              <div className="bg-gray-900 p-2 rounded-md">
-                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).url}</p>
+                                  {copyStatus['url'] ? '已复制' : '复制'}
+                                </button>
                               </div>
                             </div>
                             
-                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-gray-300 font-medium">HTML代码</span>
-                                <Button
-                                  size="sm"
-                                  variant="info"
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).htmlCode, `html-${file.id}`)}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">HTML 代码</label>
+                              <div className="flex">
+                                <input 
+                                  type="text" 
+                                  readOnly 
+                                  value={getFileShareLinks(file).htmlCode} 
+                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
+                                />
+                                <button 
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).htmlCode, 'htmlCode')} 
+                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
                                 >
-                                  {copyStatus[`html-${file.id}`] ? '已复制！' : '复制'}
-                                </Button>
-                              </div>
-                              <div className="bg-gray-900 p-2 rounded-md">
-                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).htmlCode}</p>
+                                  {copyStatus['htmlCode'] ? '已复制' : '复制'}
+                                </button>
                               </div>
                             </div>
                             
-                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
-                              <div className="flex justify-between items-center mb-1">
-                                <span className="text-gray-300 font-medium">Markdown代码</span>
-                                <Button
-                                  size="sm"
-                                  variant="info"
-                                  onClick={() => copyToClipboard(getFileShareLinks(file).markdownCode, `markdown-${file.id}`)}
+                            <div>
+                              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 theme-transition">Markdown 代码</label>
+                              <div className="flex">
+                                <input 
+                                  type="text" 
+                                  readOnly 
+                                  value={getFileShareLinks(file).markdownCode} 
+                                  className="flex-1 text-xs border border-gray-300 dark:border-gray-600 rounded-l py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
+                                />
+                                <button 
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).markdownCode, 'markdownCode')} 
+                                  className="bg-indigo-500 text-white px-2 py-1 rounded-r text-xs hover:bg-indigo-600 transition-colors"
                                 >
-                                  {copyStatus[`markdown-${file.id}`] ? '已复制！' : '复制'}
-                                </Button>
-                              </div>
-                              <div className="bg-gray-900 p-2 rounded-md">
-                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).markdownCode}</p>
+                                  {copyStatus['markdownCode'] ? '已复制' : '复制'}
+                                </button>
                               </div>
                             </div>
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -344,46 +375,45 @@ const AdminFilesPage = () => {
         </div>
       )}
       
-      {/* 图片预览模态框 */}
-      {showImagePreview && previewUrl && (
-        <ImagePreview 
-          imageUrl={previewUrl} 
-          onClose={handleClosePreview}
-          alt={previewAlt}
-        />
-      )}
-      
+      {/* 删除确认模态框 */}
       {isDeleteModalOpen && selectedFile && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 border border-gray-700">
-            <h3 className="text-xl font-semibold text-gray-200 mb-4">
-              删除文件
-            </h3>
-            
-            <p className="text-gray-300 mb-6">
-              您确定要删除文件 <span className="font-semibold text-red-400">{selectedFile.original_name}</span> 吗？此操作无法撤销。
-            </p>
-            
-            <div className="flex justify-end space-x-3">
-              <Button variant="secondary" onClick={closeDeleteModal}>
-                取消
-              </Button>
-              <Button 
-                variant="danger" 
-                onClick={handleDeleteFile}
-                loading={deleteLoading}
-              >
-                确认删除
-              </Button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden theme-transition">
+            <div className="bg-red-500 px-6 py-4">
+              <h3 className="text-white text-lg font-medium">删除文件</h3>
+              <p className="text-red-200 text-sm">此操作不可撤销</p>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700 dark:text-gray-300 mb-4 theme-transition">
+                您确定要删除文件 <span className="font-bold">{selectedFile.original_name}</span> 吗？该操作将永久删除此文件，无法恢复。
+              </p>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={closeDeleteModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 theme-transition"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDeleteFile}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? '处理中...' : '确认删除'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
       
-      {filteredFiles.length > 0 && (
-        <div className="mt-4 text-sm text-gray-400 text-center">
-          显示 {filteredFiles.length} 个文件
-        </div>
+      {/* 图片预览模态框 */}
+      {showImagePreview && previewUrl && (
+        <ImagePreview
+          imageUrl={previewUrl}
+          alt={previewAlt}
+          onClose={handleClosePreview}
+        />
       )}
     </div>
   );

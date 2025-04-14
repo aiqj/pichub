@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import type { AppProps } from 'next/app';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
 import Layout from '../components/layout/Layout';
 import dynamic from 'next/dynamic';
 import '../styles/globals.css';
@@ -52,21 +53,23 @@ function MyApp({ Component, pageProps, router }: CustomAppProps) {
     }
   }, [router.pathname]);
 
-  // 包裹在AuthProvider中,确保认证状态可用于整个应用
+  // 包裹在AuthProvider和ThemeProvider中，确保认证状态和主题状态可用于整个应用
   return (
-    <AuthProvider>
-      <DynamicToastStyles />
-      <ToastContainer position="top-right" autoClose={3000} />
-      {Component.noLayout ? (
-        // 无布局的组件(如登录页)直接渲染
-        <Component {...pageProps} key={pageKey} />
-      ) : (
-        // 有布局的组件使用Layout包装
-        <Layout>
+    <ThemeProvider>
+      <AuthProvider>
+        <DynamicToastStyles />
+        <ToastContainer position="top-right" autoClose={3000} />
+        {Component.noLayout ? (
+          // 无布局的组件(如登录页)直接渲染
           <Component {...pageProps} key={pageKey} />
-        </Layout>
-      )}
-    </AuthProvider>
+        ) : (
+          // 有布局的组件使用Layout包装
+          <Layout>
+            <Component {...pageProps} key={pageKey} />
+          </Layout>
+        )}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

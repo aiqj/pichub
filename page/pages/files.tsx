@@ -65,17 +65,17 @@ const FilesPage = () => {
         我的文件
       </h1>
       
-      <div className="w-full max-w-7xl bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-8 shadow-2xl">
+      <div className="w-full max-w-7xl bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-8 shadow-2xl theme-transition">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {renderSkeletons()}
           </div>
         ) : error ? (
-          <div className="bg-red-900/30 border border-red-800 text-red-400 px-6 py-4 rounded-md">
+          <div className="bg-red-100/80 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-6 py-4 rounded-md theme-transition">
             {error}
           </div>
         ) : files.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-64 text-gray-600 dark:text-gray-400 theme-transition">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-16 w-16 mb-4"
@@ -93,7 +93,7 @@ const FilesPage = () => {
             <p className="text-xl">您尚未上传任何文件</p>
             <a
               href="/"
-              className="mt-4 text-indigo-400 hover:text-indigo-300 flex items-center"
+              className="mt-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center theme-transition"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -126,7 +126,7 @@ const FilesPage = () => {
         )}
         
         {files.length > 0 && (
-          <div className="mt-8 text-sm text-gray-400 text-center">
+          <div className="mt-8 text-sm text-gray-600 dark:text-gray-400 text-center theme-transition">
             总共 {files.length} 个文件
           </div>
         )}

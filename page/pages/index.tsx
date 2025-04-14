@@ -342,14 +342,14 @@ const Home = () => {
         文件上传
       </h1>
       
-      <div className="w-full max-w-3xl bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-8 shadow-2xl">
+      <div className="w-full max-w-3xl bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-8 shadow-2xl theme-transition">
         {!uploadResult ? (
           <>
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all ${
+              className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all theme-transition ${
                 isDragging
                   ? 'border-indigo-500 bg-indigo-500/10'
-                  : 'border-gray-600 hover:border-indigo-400 hover:bg-gray-700/30'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-gray-700/30'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -367,7 +367,7 @@ const Home = () => {
               <div className="flex flex-col items-center justify-center space-y-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-16 w-16 ${isDragging ? 'text-indigo-400' : 'text-gray-400'}`}
+                  className={`h-16 w-16 ${isDragging ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'} theme-transition`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -379,21 +379,21 @@ const Home = () => {
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                   />
                 </svg>
-                <p className="text-lg text-gray-300 font-medium">
+                <p className="text-lg text-gray-700 dark:text-gray-300 font-medium theme-transition">
                   {isDragging ? '释放文件以上传' : '拖放文件或点击此处选择'}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 theme-transition">
                   支持 JPEG, PNG, WebP, GIF, SVG 格式，最大50MB
                 </p>
               </div>
             </div>
             
             {selectedFile && (
-              <div className="mt-4 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
+              <div className="mt-4 p-4 bg-gray-100/70 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600 theme-transition">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-gray-200 font-medium">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-gray-700 dark:text-gray-200 font-medium theme-transition">{selectedFile.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 theme-transition">
                       {selectedFile.type} - {formatFileSize(selectedFile.size)}
                     </p>
                   </div>
@@ -419,13 +419,13 @@ const Home = () => {
                 
                 {isUploading && (
                   <div className="mt-3">
-                    <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 theme-transition">
                       <div 
                         className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1 text-right">{uploadProgress}%</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right theme-transition">{uploadProgress}%</p>
                   </div>
                 )}
               </div>
@@ -441,17 +441,17 @@ const Home = () => {
             )}
             
             {errorMsg && (
-              <div className="mt-4 p-4 bg-red-900/30 rounded-lg border border-red-800 text-red-400">
+              <div className="mt-4 p-4 bg-red-100/80 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 theme-transition">
                 {errorMsg}
               </div>
             )}
           </>
         ) : (
           <div className="flex flex-col items-center space-y-6">
-            <div className="rounded-full bg-green-900/30 p-4 border border-green-800">
+            <div className="rounded-full bg-green-100/80 dark:bg-green-900/30 p-4 border border-green-200 dark:border-green-800 theme-transition">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-green-500"
+                className="h-12 w-12 text-green-600 dark:text-green-500 theme-transition"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -465,7 +465,7 @@ const Home = () => {
               </svg>
             </div>
             
-            <h2 className="text-2xl font-bold text-gray-100">上传成功！</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 theme-transition">上传成功！</h2>
             
             {uploadedData ? (
               <div className="w-full space-y-4 mt-4">
@@ -478,9 +478,9 @@ const Home = () => {
                   />
                 )}
                 
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-300 font-medium">直接链接</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">直接链接</span>
                     <Button
                       size="sm"
                       variant="info"
@@ -489,14 +489,14 @@ const Home = () => {
                       {copyStatus.url ? '已复制！' : '复制'}
                     </Button>
                   </div>
-                  <div className="bg-gray-900 p-2 rounded-md">
-                    <p className="text-gray-400 break-all text-sm">{uploadedData.url}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
+                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.url}</p>
                   </div>
                 </div>
                 
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-300 font-medium">HTML代码</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">HTML代码</span>
                     <Button
                       size="sm"
                       variant="info"
@@ -505,14 +505,14 @@ const Home = () => {
                       {copyStatus.html ? '已复制！' : '复制'}
                     </Button>
                   </div>
-                  <div className="bg-gray-900 p-2 rounded-md">
-                    <p className="text-gray-400 break-all text-sm">{uploadedData.htmlCode}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
+                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.htmlCode}</p>
                   </div>
                 </div>
                 
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-300 font-medium">Markdown代码</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">Markdown代码</span>
                     <Button
                       size="sm"
                       variant="info"
@@ -521,8 +521,8 @@ const Home = () => {
                       {copyStatus.markdown ? '已复制！' : '复制'}
                     </Button>
                   </div>
-                  <div className="bg-gray-900 p-2 rounded-md">
-                    <p className="text-gray-400 break-all text-sm">{uploadedData.markdownCode}</p>
+                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
+                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.markdownCode}</p>
                   </div>
                 </div>
                 
@@ -543,7 +543,7 @@ const Home = () => {
               </div>
             ) : (
               <div className="text-center mt-4 mb-6">
-                <p className="text-gray-300">图片已上传但无法获取详细链接信息</p>
+                <p className="text-gray-700 dark:text-gray-300 theme-transition">图片已上传但无法获取详细链接信息</p>
                 <Button variant="primary" onClick={handleReset} className="mt-4">
                   重新上传
                 </Button>
@@ -557,14 +557,14 @@ const Home = () => {
         <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-4">
           关于PicHub
         </h2>
-        <p className="text-gray-300 mb-4">
+        <p className="text-gray-700 dark:text-gray-300 mb-4 theme-transition">
           PicHub是一个高效、安全的图像管理平台，支持多种图像格式，提供便捷的图像分享和管理功能。
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
+          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-400 mx-auto mb-2"
+              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -576,14 +576,14 @@ const Home = () => {
                 d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-gray-200">多格式支持</h3>
-            <p className="text-gray-400 text-sm mt-1">支持JPEG, PNG, WebP, GIF, SVG等多种图像格式</p>
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">多格式支持</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">支持JPEG, PNG, WebP, GIF, SVG等多种图像格式</p>
           </div>
           
-          <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
+          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-400 mx-auto mb-2"
+              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -595,14 +595,14 @@ const Home = () => {
                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-gray-200">安全存储</h3>
-            <p className="text-gray-400 text-sm mt-1">使用先进的加密技术确保您的图像安全存储</p>
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">安全存储</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">使用先进的加密技术确保您的图像安全存储</p>
           </div>
           
-          <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
+          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-400 mx-auto mb-2"
+              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -614,8 +614,8 @@ const Home = () => {
                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
             </svg>
-            <h3 className="text-lg font-medium text-gray-200">便捷分享</h3>
-            <p className="text-gray-400 text-sm mt-1">一键复制多种格式的链接代码，方便在各种平台分享</p>
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">便捷分享</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">一键复制多种格式的链接代码，方便在各种平台分享</p>
           </div>
         </div>
       </div>

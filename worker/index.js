@@ -677,7 +677,7 @@ async function handleGetUserFiles(request, env) {
   }
   
   const files = await env.DB.prepare(
-    'SELECT * FROM files WHERE user_id = ? ORDER BY uploaded_at DESC'
+    'SELECT id, user_id, file_name, original_name, file_size, file_type, strftime("%Y-%m-%d %H:%M:%S", datetime(uploaded_at, "+8 hours")) as uploaded_at FROM files WHERE user_id = ? ORDER BY uploaded_at DESC'
   ).bind(userId).all();
   
   // await logAction(env, user.id, user.username, 'GET_USER_FILES', `获取用户文件列表。用户ID: ${userId}`);
@@ -696,7 +696,8 @@ async function handleGetAllFiles(request, env) {
   }
   
   const files = await env.DB.prepare(
-    `SELECT files.*, users.username
+    `SELECT files.id, files.user_id, files.file_name, files.original_name, files.file_size, files.file_type, 
+     strftime("%Y-%m-%d %H:%M:%S", datetime(files.uploaded_at, "+8 hours")) as uploaded_at, users.username
      FROM files
      JOIN users ON files.user_id = users.id
      ORDER BY files.uploaded_at DESC`

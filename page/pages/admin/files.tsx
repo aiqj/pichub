@@ -18,6 +18,8 @@ const AdminFilesPage = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState<boolean>(false);
   const [previewAlt, setPreviewAlt] = useState<string>('图片预览');
+  const [sharingFileId, setSharingFileId] = useState<number | null>(null);
+  const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
   
   // 加载文件列表
   useEffect(() => {
@@ -93,6 +95,37 @@ const AdminFilesPage = () => {
     } else {
       return `${(size / (1024 * 1024)).toFixed(2)} MB`;
     }
+  };
+  
+  // 切换分享选项的显示
+  const toggleShareOptions = (fileId: number) => {
+    setSharingFileId(sharingFileId === fileId ? null : fileId);
+  };
+  
+  // 复制到剪贴板
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopyStatus({ ...copyStatus, [type]: true });
+        setTimeout(() => {
+          setCopyStatus({ ...copyStatus, [type]: false });
+        }, 2000);
+        toast.success('已复制到剪贴板');
+      })
+      .catch(err => {
+        toast.error('复制失败，请手动复制');
+      });
+  };
+  
+  // 获取文件的分享链接
+  const getFileShareLinks = (file: FileItem) => {
+    const apiHost = process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST;
+    const url = `${apiHost}/images/${file.file_name}`;
+    return {
+      url: url,
+      htmlCode: `<img src="${url}" alt="${file.original_name}" />`,
+      markdownCode: `![${file.original_name}](${url})`
+    };
   };
   
   // 获取唯一的文件类型列表
@@ -197,75 +230,113 @@ const AdminFilesPage = () => {
               </thead>
               <tbody className="bg-gray-800/10 divide-y divide-gray-700">
                 {filteredFiles.map((file) => (
-                  <tr key={file.id} className="hover:bg-gray-700/30">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-md bg-gray-900 overflow-hidden">
-                          {file.file_type.startsWith('image/') ? (
-                            <img 
-                              src={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`} 
-                              alt="" 
-                              className="h-10 w-10 object-cover cursor-pointer"
-                              onClick={() => handlePreviewImage(file)}
-                            />
-                          ) : (
-                            <div className="h-10 w-10 flex items-center justify-center bg-gray-800">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-200 truncate max-w-xs" title={file.original_name}>
-                            {file.original_name}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate max-w-xs" title={file.file_name}>
-                            {file.file_name}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {file.username || '未知用户'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900/50 text-blue-300">
-                        {file.file_type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {formatFileSize(file.file_size)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {new Date(file.uploaded_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a
-                        href={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-400 hover:text-indigo-300 mr-4"
-                      >
-                        查看
-                      </a>
-                      {file.file_type.startsWith('image/') && (
-                        <button
-                          onClick={() => handlePreviewImage(file)}
-                          className="text-cyan-400 hover:text-cyan-300 mr-4"
+                  <React.Fragment key={file.id}>
+                    <tr className="hover:bg-gray-700/30">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-200">
+                        {file.original_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {file.username || '未知用户'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-900/50 text-blue-300">
+                          {file.file_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {formatFileSize(file.file_size)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        {new Date(file.uploaded_at).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a
+                          href={`${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-400 hover:text-indigo-300 mr-4"
                         >
-                          预览
+                          查看
+                        </a>
+                        {file.file_type.startsWith('image/') && (
+                          <button
+                            onClick={() => handlePreviewImage(file)}
+                            className="text-cyan-400 hover:text-cyan-300 mr-4"
+                          >
+                            预览
+                          </button>
+                        )}
+                        <button
+                          onClick={() => toggleShareOptions(file.id)}
+                          className="text-green-400 hover:text-green-300 mr-4"
+                        >
+                          {sharingFileId === file.id ? '隐藏分享' : '分享'}
                         </button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        onClick={() => openDeleteModal(file)}
-                      >
-                        删除
-                      </Button>
-                    </td>
-                  </tr>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => openDeleteModal(file)}
+                        >
+                          删除
+                        </Button>
+                      </td>
+                    </tr>
+                    {sharingFileId === file.id && (
+                      <tr className="bg-gray-800/50">
+                        <td colSpan={6} className="px-6 py-4">
+                          <div className="space-y-3">
+                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-gray-300 font-medium">直接链接</span>
+                                <Button
+                                  size="sm"
+                                  variant="info"
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).url, `url-${file.id}`)}
+                                >
+                                  {copyStatus[`url-${file.id}`] ? '已复制！' : '复制'}
+                                </Button>
+                              </div>
+                              <div className="bg-gray-900 p-2 rounded-md">
+                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).url}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-gray-300 font-medium">HTML代码</span>
+                                <Button
+                                  size="sm"
+                                  variant="info"
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).htmlCode, `html-${file.id}`)}
+                                >
+                                  {copyStatus[`html-${file.id}`] ? '已复制！' : '复制'}
+                                </Button>
+                              </div>
+                              <div className="bg-gray-900 p-2 rounded-md">
+                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).htmlCode}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-gray-900/50 p-3 rounded-lg border border-gray-700">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-gray-300 font-medium">Markdown代码</span>
+                                <Button
+                                  size="sm"
+                                  variant="info"
+                                  onClick={() => copyToClipboard(getFileShareLinks(file).markdownCode, `markdown-${file.id}`)}
+                                >
+                                  {copyStatus[`markdown-${file.id}`] ? '已复制！' : '复制'}
+                                </Button>
+                              </div>
+                              <div className="bg-gray-900 p-2 rounded-md">
+                                <p className="text-gray-400 break-all text-sm">{getFileShareLinks(file).markdownCode}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

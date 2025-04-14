@@ -76,12 +76,19 @@ export const authApi = {
 
 // 文件相关API
 export const fileApi = {
-  uploadFile: (file: File) => {
+  uploadFile: (file: File, onProgress?: (progress: number) => void) => {
     const formData = new FormData();
     formData.append('file', file);
+    
     return api.post('/api/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
       }
     });
   },

@@ -1,9 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import Button from '../components/ui/Button';
 import { useRouter } from 'next/router';
 import { CodeSnippet } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import ImagePreview from '../components/ImagePreview';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import { fileApi } from '../utils/api';
+
+// 动态导入图片预览组件
+const ImagePreview = dynamic(() => import('../components/ImagePreview'), {
+  loading: () => <div className="w-full h-64 bg-gray-800 animate-pulse rounded-lg"></div>,
+  ssr: false
+});
 
 const Home = () => {
   const router = useRouter();
@@ -112,40 +120,103 @@ const Home = () => {
     
     setIsUploading(true);
     setErrorMsg(null);
+    setUploadProgress(0); // 重置上传进度
+    setShowImagePreview(false); // 确保关闭之前可能打开的预览模态框
     
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch(`${apiEndpoint}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
+      const response = await fileApi.uploadFile(file, (progress) => {
+        setUploadProgress(progress);
+      }).then(res => {
+        setIsUploading(false);
+        return res;
+      }).catch(error => {
+        setIsUploading(false);
+        if (error.response) {
+          throw new Error(error.response.data?.message || error.response.data?.error || '上传失败，请重试');
+        } else {
+          throw new Error('网络错误，请检查连接');
+        }
       });
+
+      // 处理成功响应  
+      const responseData = response.data;
+      setUploadResult(responseData);
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '上传失败');
+      if (responseData.success && responseData.url) {
+        const url = responseData.url;
+        const originalName = responseData.originalName || '上传图片';
+        const uploadData = {
+          url: url,
+          htmlCode: `<img src="${url}" alt="${originalName}" />`,
+          markdownCode: `![${originalName}](${url})`
+        };
+        
+        setUploadedData(uploadData);
+        setPreviewUrl(url);
+      } else if (responseData.data && responseData.data.url) {
+        const url = responseData.data.url;
+        const originalName = responseData.data.originalName || '上传图片';
+        const uploadData = {
+          url: url,
+          htmlCode: `<img src="${url}" alt="${originalName}" />`,
+          markdownCode: `![${originalName}](${url})`
+        };
+        
+        setUploadedData(uploadData);
+        setPreviewUrl(url);
+      } else {
+        let url = '';
+        let originalName = '上传图片';
+        
+        for (const key in responseData) {
+          if (typeof responseData[key] === 'string' && 
+             (responseData[key].startsWith('http') || responseData[key].startsWith('/uploads'))) {
+            url = responseData[key];
+            break;
+          }
+        }
+        
+        if (responseData.originalName || responseData.filename) {
+          originalName = responseData.originalName || responseData.filename;
+        }
+        
+        if (url) {
+          const uploadData = {
+            url: url,
+            htmlCode: `<img src="${url}" alt="${originalName}" />`,
+            markdownCode: `![${originalName}](${url})`
+          };
+          
+          setUploadedData(uploadData);
+          setPreviewUrl(url);
+        } else {
+          setErrorMsg('上传成功但无法获取图片链接');
+        }
       }
       
-      const result = await response.json();
-      setUploadResult(result);
       setSelectedFile(null);
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : '上传失败，请重试');
-    } finally {
       setIsUploading(false);
     }
   };
   
   // 复制URL
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        setCopyStatus(prev => ({
+          ...prev,
+          [type]: true
+        }));
+        
+        // 2秒后重置复制状态
+        setTimeout(() => {
+          setCopyStatus(prev => ({
+            ...prev,
+            [type]: false
+          }));
+        }, 2000);
       })
       .catch(err => {
         setErrorMsg('复制失败，请手动复制');
@@ -155,10 +226,14 @@ const Home = () => {
   // 重置状态，准备下一次上传
   const handleReset = () => {
     setUploadResult(null);
+    setUploadedData(null);
     setSelectedFile(null);
     setErrorMsg(null);
     setPreviewUrl(null);
-    setShowImagePreview(false);
+    setShowImagePreview(false); // 确保关闭预览模态框
+    setCopyStatus({});
+    setUploadProgress(0);
+    
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -392,37 +467,8 @@ const Home = () => {
             
             <h2 className="text-2xl font-bold text-gray-100">上传成功！</h2>
             
-            {uploadedData && (
+            {uploadedData ? (
               <div className="w-full space-y-4 mt-4">
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-300 font-medium">预览</span>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => {
-                        setPreviewUrl(uploadedData.url);
-                        setShowImagePreview(true);
-                      }}
-                    >
-                      放大查看
-                    </Button>
-                  </div>
-                  <div 
-                    className="flex justify-center bg-gray-900 p-4 rounded-md cursor-zoom-in"
-                    onClick={() => {
-                      setPreviewUrl(uploadedData.url);
-                      setShowImagePreview(true);
-                    }}
-                  >
-                    <img
-                      src={uploadedData.url}
-                      alt="上传预览"
-                      className="max-h-64 max-w-full object-contain"
-                    />
-                  </div>
-                </div>
-                
                 {/* 图片预览模态框 */}
                 {showImagePreview && previewUrl && (
                   <ImagePreview 
@@ -438,9 +484,9 @@ const Home = () => {
                     <Button
                       size="sm"
                       variant="info"
-                      onClick={() => copyToClipboard(uploadedData.url)}
+                      onClick={() => copyToClipboard(uploadedData.url, 'url')}
                     >
-                      {copied ? '已复制！' : '复制'}
+                      {copyStatus.url ? '已复制！' : '复制'}
                     </Button>
                   </div>
                   <div className="bg-gray-900 p-2 rounded-md">
@@ -454,9 +500,9 @@ const Home = () => {
                     <Button
                       size="sm"
                       variant="info"
-                      onClick={() => copyToClipboard(uploadedData.htmlCode)}
+                      onClick={() => copyToClipboard(uploadedData.htmlCode, 'html')}
                     >
-                      {copied ? '已复制！' : '复制'}
+                      {copyStatus.html ? '已复制！' : '复制'}
                     </Button>
                   </div>
                   <div className="bg-gray-900 p-2 rounded-md">
@@ -470,21 +516,39 @@ const Home = () => {
                     <Button
                       size="sm"
                       variant="info"
-                      onClick={() => copyToClipboard(uploadedData.markdownCode)}
+                      onClick={() => copyToClipboard(uploadedData.markdownCode, 'markdown')}
                     >
-                      {copied ? '已复制！' : '复制'}
+                      {copyStatus.markdown ? '已复制！' : '复制'}
                     </Button>
                   </div>
                   <div className="bg-gray-900 p-2 rounded-md">
                     <p className="text-gray-400 break-all text-sm">{uploadedData.markdownCode}</p>
                   </div>
                 </div>
+                
+                <div className="flex justify-center mt-6">
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => {
+                      setShowImagePreview(true);
+                    }}
+                    className="mr-3"
+                  >
+                    查看图片
+                  </Button>
+                  <Button variant="primary" onClick={handleReset}>
+                    重新上传
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center mt-4 mb-6">
+                <p className="text-gray-300">图片已上传但无法获取详细链接信息</p>
+                <Button variant="primary" onClick={handleReset} className="mt-4">
+                  重新上传
+                </Button>
               </div>
             )}
-            
-            <Button variant="primary" onClick={handleReset}>
-              上传新图像
-            </Button>
           </div>
         )}
       </div>

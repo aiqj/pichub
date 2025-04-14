@@ -4,6 +4,7 @@ import FileCard from '../components/FileCard';
 import { fileApi } from '../utils/api';
 import { FileItem } from '../types';
 import ImagePreview from '../components/ImagePreview';
+import FileSkeleton from '../components/FileSkeleton';
 
 const FilesPage = () => {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -50,6 +51,13 @@ const FilesPage = () => {
   const handleDeleteFile = (id: number) => {
     setFiles((prevFiles) => prevFiles.filter((file) => file.id !== id));
   };
+
+  // 渲染骨架屏
+  const renderSkeletons = () => {
+    return Array(6).fill(0).map((_, index) => (
+      <FileSkeleton key={`skeleton-${index}`} />
+    ));
+  };
   
   return (
     <div className="flex flex-col items-center">
@@ -59,8 +67,8 @@ const FilesPage = () => {
       
       <div className="w-full max-w-7xl bg-gray-800/30 backdrop-blur-sm border border-gray-700 rounded-xl p-8 shadow-2xl">
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {renderSkeletons()}
           </div>
         ) : error ? (
           <div className="bg-red-900/30 border border-red-800 text-red-400 px-6 py-4 rounded-md">

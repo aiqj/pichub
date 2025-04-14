@@ -15,13 +15,54 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, onClose, alt = '�
   const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  // 处理缩放
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY * -0.01;
-    const newScale = Math.min(Math.max(0.1, scale + delta), 5); // 限制缩放范围在0.1到5倍之间
-    setScale(newScale);
-  };
+  // 阻止容器滚动
+  useEffect(() => {
+    const preventScroll = (e: WheelEvent) => {
+      if (containerRef.current?.contains(e.target as Node)) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 在这里添加缩放逻辑，确保滚轮事件能被处理
+        const delta = e.deltaY * -0.01;
+        const newScale = Math.min(Math.max(0.1, scale + delta), 5);
+        setScale(newScale);
+        
+        return false;
+      }
+    };
+
+    // 添加全局事件监听器以确保捕获所有滚轮事件
+    document.addEventListener('wheel', preventScroll, { passive: false, capture: true });
+    
+    // 防止触摸滚动
+    const preventTouchMove = (e: TouchEvent) => {
+      if (containerRef.current?.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+    
+    document.addEventListener('touchmove', preventTouchMove, { passive: false, capture: true });
+
+    // 防止滚动传播
+    const preventBodyScroll = () => {
+      if (containerRef.current) {
+        document.body.style.overflow = 'hidden';
+      }
+    };
+    
+    const restoreBodyScroll = () => {
+      document.body.style.overflow = '';
+    };
+    
+    preventBodyScroll();
+
+    // 组件卸载时移除事件监听器
+    return () => {
+      document.removeEventListener('wheel', preventScroll, { capture: true });
+      document.removeEventListener('touchmove', preventTouchMove, { capture: true });
+      restoreBodyScroll();
+    };
+  }, [scale]);
 
   // 处理拖拽开始
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -252,7 +293,6 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, onClose, alt = '�
       
       <div 
         className={`relative overflow-hidden select-none h-full w-full flex items-center justify-center ${isFullscreen ? 'fixed inset-0 bg-black' : ''}`}
-        onWheel={handleWheel}
         ref={imageContainerRef}
       >
         <img
@@ -273,7 +313,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ imageUrl, onClose, alt = '�
 
       <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800/80 text-white px-4 py-2 rounded-lg backdrop-blur-sm ${isFullscreen ? 'fixed' : ''}`}>
         <p className="text-sm font-medium">
-          缩放: {Math.round(scale * 100)}% | 拖拽查看 | 双击重置 | F键全屏 | 方向键移动 {isFullscreen && "| 退出全屏自动重置"} | ESC关闭
+          缩放: {Math.round(scale * 100)}% | 拖拽查看 | 双击重置 | F键全屏 | ESC关闭
         </p>
       </div>
     </div>

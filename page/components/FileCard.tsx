@@ -9,13 +9,15 @@ interface FileCardProps {
   file: FileItem;
   onDelete: (id: number) => void;
   onPreview?: () => void;
+  onStatusChange?: (fileId: number, isPublic: boolean) => void;
 }
 
-const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
+const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview, onStatusChange }) => {
   const [showCopyOptions, setShowCopyOptions] = useState(false);
   const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   
   // 根据后端返回的图片URL构建完整路径
   const imageUrl = `${process.env.NEXT_PUBLIC_API_HOST || process.env.API_HOST}/images/${file.file_name}`;
@@ -109,6 +111,30 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
       setShowDeleteConfirm(false);
     }
   };
+
+  // 切换文件公开状态
+  const toggleFilePublicStatus = async () => {
+    setIsUpdatingStatus(true);
+    const newStatus = file.is_public === 0;
+
+    try {
+      const response = await fileApi.updateFileStatus(file.id, newStatus);
+      if (response.data.success) {
+        const statusText = newStatus ? '公开' : '私有';
+        toast.success(`文件已设为${statusText}`);
+        // 通知父组件状态已更改
+        if (onStatusChange) {
+          onStatusChange(file.id, newStatus);
+        }
+      } else {
+        toast.error(response.data.message || '更新状态失败，请重试');
+      }
+    } catch (error) {
+      toast.error('更新文件状态时发生错误，请重试');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
   
   return (
     <>
@@ -128,14 +154,23 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
           )}
           
           {/* 文件类型显示 */}
-          <div className="absolute top-2 right-2 bg-indigo-100/90 dark:bg-black/70 text-xs px-2 py-1 rounded-full text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-500/40 theme-transition">
+          <div className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 theme-transition shadow-sm">
             {file.file_type.split('/')[1].toUpperCase()}
+          </div>
+
+          {/* 文件状态指示 */}
+          <div className={`absolute top-2 left-2 px-2 py-1 rounded-md text-xs font-medium backdrop-blur-sm shadow-sm ${
+            file.is_public === 1
+              ? 'bg-emerald-500/80 text-white border border-emerald-600 dark:bg-emerald-600/90'
+              : 'bg-amber-500/80 text-white border border-amber-600 dark:bg-amber-600/90'
+          }`}>
+            {file.is_public === 1 ? '公开' : '私有'}
           </div>
           
           {/* 预览图标提示 */}
           {onPreview && (
             <div className="absolute inset-0 bg-black/0 hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
-              <div className="bg-black/70 rounded-full p-2">
+              <div className="bg-black/70 rounded-full p-3 shadow-xl">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                 </svg>
@@ -146,9 +181,47 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
         
         <div className="p-4">
           <div className="flex flex-col space-y-2">
-            <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 truncate theme-transition" title={file.original_name}>
-              {file.original_name}
-            </h3>
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 truncate theme-transition flex-1 mr-2" title={file.original_name}>
+                {file.original_name}
+              </h3>
+              
+              {/* 状态切换按钮 - 只显示图标，使用锁图标 */}
+              <button 
+                onClick={toggleFilePublicStatus}
+                disabled={isUpdatingStatus}
+                className={`relative p-1.5 rounded-full transition-all duration-300 shadow-sm ${
+                  isUpdatingStatus ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'
+                } ${
+                  file.is_public === 1 
+                    ? 'bg-emerald-100 dark:bg-emerald-700/80 text-emerald-600 dark:text-emerald-200' 
+                    : 'bg-amber-100 dark:bg-amber-700/80 text-amber-600 dark:text-amber-200'
+                }`}
+                title={file.is_public === 1 ? '设为私有' : '设为公开'}
+              >
+                {isUpdatingStatus ? (
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-4 w-4" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    {file.is_public === 1 ? (
+                      <path d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    ) : (
+                      <path d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    )}
+                  </svg>
+                )}
+              </button>
+            </div>
             
             <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 theme-transition">
               <span>{formatFileSize(file.file_size)}</span>
@@ -178,103 +251,109 @@ const FileCard: React.FC<FileCardProps> = ({ file, onDelete, onPreview }) => {
               </span>
             </div>
             
-            <div className="flex justify-between items-center mt-2">
-              {onPreview ? (
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setShowCopyOptions(!showCopyOptions)}
-                  >
-                    {showCopyOptions ? '隐藏链接' : '分享链接'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="info"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPreview();
-                    }}
-                  >
-                    预览
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setShowCopyOptions(!showCopyOptions)}
+            {/* 操作按钮区 - 纯图标显示 */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+              {/* 分享按钮 */}
+              <button
+                onClick={() => setShowCopyOptions(!showCopyOptions)}
+                className="group flex-1 flex items-center justify-center p-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/80 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition-all duration-300 theme-transition shadow-sm dark:shadow-inner dark:shadow-black/30"
+                title={showCopyOptions ? "隐藏链接" : "分享链接"}
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
                 >
-                  {showCopyOptions ? '隐藏链接' : '分享链接'}
-                </Button>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+              </button>
+              
+              {/* 预览按钮 */}
+              {onPreview && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPreview();
+                  }}
+                  className="group flex-1 flex items-center justify-center p-2 rounded-md bg-blue-100 hover:bg-blue-200 dark:bg-blue-700/60 dark:hover:bg-blue-600/70 text-blue-600 dark:text-blue-200 transition-all duration-300 theme-transition shadow-sm dark:shadow-inner dark:shadow-black/30"
+                  title="预览"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
               )}
               
-              <Button
-                size="sm"
-                variant="danger"
+              {/* 删除按钮 */}
+              <button
                 onClick={() => setShowDeleteConfirm(true)}
-                loading={isDeleting}
-                className="transition-all duration-300 hover:shadow-md hover:shadow-red-500/20 hover:scale-105 relative overflow-hidden group"
+                disabled={isDeleting}
+                className="group flex-1 flex items-center justify-center p-2 rounded-md bg-red-100 hover:bg-red-200 dark:bg-red-700/60 dark:hover:bg-red-600/70 text-red-600 dark:text-red-200 transition-all duration-300 theme-transition shadow-sm dark:shadow-inner dark:shadow-black/30"
+                title="删除"
               >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0 group-hover:animate-shimmer bg-200%"></span>
-                <span className="relative flex items-center">
-                  {isDeleting ? null : (
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1 transition-all duration-300 group-hover:rotate-12"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                  {isDeleting ? '处理中...' : '删除'}
-                </span>
-              </Button>
+                {isDeleting ? (
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-12"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
             </div>
             
             {showCopyOptions && (
-              <div className="mt-3 bg-gray-100/70 dark:bg-gray-900/50 p-3 rounded-md border border-gray-300 dark:border-gray-700 theme-transition">
-                <input 
-                  type="text" 
-                  readOnly 
-                  value={codeSnippets.url}
-                  className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded py-1 px-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition mb-3"
-                  onClick={(e) => (e.target as HTMLInputElement).select()}
-                />
-                
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="info"
+              <div className="mt-3 bg-gray-100/70 dark:bg-gray-800/80 p-3 rounded-md border border-gray-300 dark:border-gray-600 theme-transition shadow-sm">
+                <div className="relative mb-3">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={codeSnippets.url}
+                    className="w-full text-xs border border-gray-300 dark:border-gray-500 rounded py-1.5 px-3 pr-8 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 theme-transition"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
                     onClick={() => copyToClipboard(codeSnippets.url, 'url')}
-                    className="flex-1 relative overflow-hidden group"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    title="复制链接"
                   >
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 group-hover:animate-shimmer bg-200%"></span>
-                    <span className="relative z-10 text-xs">复制链接</span>
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="info"
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
                     onClick={() => copyToClipboard(codeSnippets.htmlCode, 'html')}
-                    className="flex-1 relative overflow-hidden group"
+                    className="flex-1 text-xs py-1.5 rounded-md bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-700/70 dark:hover:bg-indigo-600/80 text-indigo-700 dark:text-indigo-200 transition-all duration-300 theme-transition shadow-sm"
                   >
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 group-hover:animate-shimmer bg-200%"></span>
-                    <span className="relative z-10 text-xs">复制HTML</span>
-                  </Button>
+                    复制HTML
+                  </button>
                   
-                  <Button
-                    size="sm"
-                    variant="info"
+                  <button
                     onClick={() => copyToClipboard(codeSnippets.markdownCode, 'markdown')}
-                    className="flex-1 relative overflow-hidden group"
+                    className="flex-1 text-xs py-1.5 rounded-md bg-purple-100 hover:bg-purple-200 dark:bg-purple-700/70 dark:hover:bg-purple-600/80 text-purple-700 dark:text-purple-200 transition-all duration-300 theme-transition shadow-sm"
                   >
-                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 group-hover:animate-shimmer bg-200%"></span>
-                    <span className="relative z-10 text-xs">复制MD</span>
-                  </Button>
+                    复制Markdown
+                  </button>
                 </div>
               </div>
             )}

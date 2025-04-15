@@ -25,10 +25,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<DropdownPosition>({ top: 0, left: 0 });
   const userAvatarRef = useRef<HTMLDivElement>(null);
+  // 添加滚动状态
+  const [scrolled, setScrolled] = useState(false);
 
   // 在组件挂载后设置isClient为true
   useEffect(() => {
     setIsClient(true);
+    
+    // 添加滚动监听
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      if (scrollPosition > 50) { // 滚动超过50px时添加背景
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleLogout = () => {
@@ -71,8 +86,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     // 获取当前页面路径
     const path = router.pathname;
     
+    // 公开页面列表 - 这些页面不需要登录就可以访问
+    const publicPages = ['/', '/login', '/register'];
+    
     // 非认证用户尝试访问需要认证的页面，重定向到登录页
-    if (!isAuthenticated && path !== '/login' && path !== '/register') {
+    if (!isAuthenticated && !publicPages.includes(path)) {
       router.push('/login');
       return;
     }
@@ -159,17 +177,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
   }
 
+  // 判断是否是首页
+  const isHomePage = router.pathname === '/';
+
   // 已通过所有重定向检查，渲染正常布局
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white flex flex-col theme-transition">
-      {/* 导航栏 - 只在用户登录后显示 */}
-      {(!isClient || isAuthenticated) && !isAuthPage && (
-        <nav className="bg-white/80 dark:bg-black/30 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 theme-transition">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* 导航栏 - 为所有页面显示导航栏，除了登录和注册页 */}
+      {!isAuthPage && (
+        <nav 
+          className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+            scrolled || !isHomePage 
+              ? 'bg-white/80 dark:bg-black/30 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700' 
+              : 'bg-transparent'
+          } theme-transition`}
+        >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
                 <Link href="/" className="flex items-center">
-                  <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-500">
+                  <span className={`text-2xl font-bold ${
+                    !scrolled && isHomePage
+                      ? 'text-white' 
+                      : 'bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-500'
+                  }`}>
                     PicHub
                   </span>
                 </Link>
@@ -177,39 +208,60 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center">
                 <div className="flex items-center space-x-4">
                   <Link
-                    href="/"
+                    href="/upload"
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      router.pathname === '/' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                      !scrolled && isHomePage
+                        ? 'text-white hover:text-white/80'
+                        : router.pathname === '/upload' 
+                          ? 'text-indigo-600 dark:text-indigo-400' 
+                          : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
                     } theme-transition`}
                   >
                     上传
                   </Link>
 
-                  <Link
-                    href="/files"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      router.pathname === '/files' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
-                    } theme-transition`}
-                  >
-                    我的文件
-                  </Link>
-                  
-                  {(!isClient || (user && user.role === 'admin')) && (
-                    <Link
-                      href="/admin"
-                      className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        isAdminRoute ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
-                      } theme-transition`}
-                    >
-                      管理面板
-                    </Link>
+                  {/* 只为已登录用户显示的链接 */}
+                  {isAuthenticated && (
+                    <>
+                      <Link
+                        href="/files"
+                        className={`px-3 py-2 rounded-md text-sm font-medium ${
+                          !scrolled && isHomePage
+                            ? 'text-white hover:text-white/80'
+                            : router.pathname === '/files' 
+                              ? 'text-indigo-600 dark:text-indigo-400' 
+                              : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                        } theme-transition`}
+                      >
+                        我的文件
+                      </Link>
+                      
+                      {(user && user.role === 'admin') && (
+                        <Link
+                          href="/admin"
+                          className={`px-3 py-2 rounded-md text-sm font-medium ${
+                            !scrolled && isHomePage
+                              ? 'text-white hover:text-white/80'
+                              : isAdminRoute 
+                                ? 'text-indigo-600 dark:text-indigo-400' 
+                                : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                          } theme-transition`}
+                        >
+                          管理面板
+                        </Link>
+                      )}
+                    </>
                   )}
 
                   {/* 主题切换按钮 */}
                   <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex items-center justify-center h-9 w-9 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-all duration-200 ease-in-out focus:outline-none theme-transition"
+                    className={`flex items-center justify-center h-9 w-9 transition-all duration-200 ease-in-out focus:outline-none ${
+                      !scrolled && isHomePage
+                        ? 'text-white hover:text-white/80'
+                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+                    } theme-transition`}
                     aria-label={theme === 'dark' ? "切换到浅色模式" : "切换到深色模式"}
                   >
                     {theme === 'dark' ? (
@@ -217,90 +269,116 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${!scrolled && isHomePage ? 'text-white' : 'text-amber-500'}`} viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06z"/>
                       </svg>
                     )}
                   </button>
                   
-                  <div className="relative px-3 py-2">
-                    <div 
-                      ref={userAvatarRef}
-                      className="relative group cursor-pointer flex items-center"
-                      onClick={handleToggleDropdown}
-                    >
-                      <div className="h-8 w-8 rounded-full border border-gray-300 hover:border-indigo-400 dark:border-gray-600 dark:hover:border-indigo-400 flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-gray-700 theme-transition">
-                        {user?.avatar ? (
-                          <img
-                            src={user.avatar}
-                            alt="用户头像"
-                            className="h-8 w-8 object-cover"
-                          />
-                        ) : (
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-300 theme-transition">
-                            {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded whitespace-nowrap shadow-md theme-transition">
-                        {user?.username || "用户"}
-                      </div>
-                    </div>
-                    
-                    {/* 使用Portal将下拉菜单渲染到body */}
-                    {isClient && dropdownOpen && createPortal(
-                      <div className="fixed z-[99999]" style={{ top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
-                        <div 
-                          className="absolute w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dropdown-menu transform transition-transform duration-200 ease-out origin-top-right theme-transition"
-                          style={{
-                            top: `${dropdownPosition.top}px`,
-                            left: `${dropdownPosition.left}px`,
-                            pointerEvents: 'auto',
-                          }}
-                          onClick={(e) => e.stopPropagation()} // 防止点击菜单时关闭菜单
-                        >
-                          {/* 箭头指示器 */}
-                          <div 
-                            className="absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-gray-200 dark:border-gray-700 transform rotate-45 theme-transition"
-                            style={{ 
-                              top: '-6px', 
-                              left: `${dropdownPosition.avatarLeft - dropdownPosition.left - 6}px`,
-                            }}
-                          ></div>
-                          
-                          <div className="relative z-10"> {/* 确保内容在箭头上方 */}
-                            <div 
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer dropdown-menu-item theme-transition"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDropdownOpen(false);
-                                router.push('/profile').catch(err => console.error('导航错误:', err));
-                              }}
-                            >
-                              <svg className="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              个人资料
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDropdownOpen(false);
-                                handleLogout();
-                              }}
-                              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 dropdown-menu-item theme-transition"
-                            >
-                              <svg className="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                              </svg>
-                              退出
-                            </button>
-                          </div>
+                  {/* 用户头像或登录按钮 */}
+                  {isAuthenticated ? (
+                    <div className="relative px-3 py-2">
+                      <div 
+                        ref={userAvatarRef}
+                        className="relative group cursor-pointer flex items-center"
+                        onClick={handleToggleDropdown}
+                      >
+                        <div className="h-8 w-8 rounded-full border border-gray-300 hover:border-indigo-400 dark:border-gray-600 dark:hover:border-indigo-400 flex items-center justify-center overflow-hidden bg-gray-200 dark:bg-gray-700 theme-transition">
+                          {user?.avatar ? (
+                            <img
+                              src={user.avatar}
+                              alt="用户头像"
+                              className="h-8 w-8 object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-300 theme-transition">
+                              {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
+                            </span>
+                          )}
                         </div>
-                      </div>,
-                      document.body
-                    )}
-                  </div>
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded whitespace-nowrap shadow-md theme-transition">
+                          {user?.username || "用户"}
+                        </div>
+                      </div>
+                      
+                      {/* 使用Portal将下拉菜单渲染到body */}
+                      {isClient && dropdownOpen && createPortal(
+                        <div className="fixed z-[99999]" style={{ top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none' }}>
+                          <div 
+                            className="absolute w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 dropdown-menu transform transition-transform duration-200 ease-out origin-top-right theme-transition"
+                            style={{
+                              top: `${dropdownPosition.top}px`,
+                              left: `${dropdownPosition.left}px`,
+                              pointerEvents: 'auto',
+                            }}
+                            onClick={(e) => e.stopPropagation()} // 防止点击菜单时关闭菜单
+                          >
+                            {/* 箭头指示器 */}
+                            <div 
+                              className="absolute w-3 h-3 bg-white dark:bg-gray-800 border-t border-l border-gray-200 dark:border-gray-700 transform rotate-45 theme-transition"
+                              style={{ 
+                                top: '-6px', 
+                                left: `${dropdownPosition.avatarLeft - dropdownPosition.left - 6}px`,
+                              }}
+                            ></div>
+                            
+                            <div className="relative z-10"> {/* 确保内容在箭头上方 */}
+                              <div 
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer dropdown-menu-item theme-transition"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDropdownOpen(false);
+                                  router.push('/profile').catch(err => console.error('导航错误:', err));
+                                }}
+                              >
+                                <svg className="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                个人资料
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDropdownOpen(false);
+                                  handleLogout();
+                                }}
+                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-indigo-600 dark:hover:text-indigo-400 dropdown-menu-item theme-transition"
+                              >
+                                <svg className="mr-3 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                退出
+                              </button>
+                            </div>
+                          </div>
+                        </div>,
+                        document.body
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href="/login"
+                        className={`px-3 py-2 rounded-md text-sm font-medium ${
+                          !scrolled && isHomePage
+                            ? 'text-white hover:text-white/80'
+                            : 'text-gray-600 hover:text-indigo-500 dark:text-gray-300 dark:hover:text-indigo-300'
+                        } theme-transition`}
+                      >
+                        登录
+                      </Link>
+                      <Link
+                        href="/register"
+                        className={`px-4 py-2 rounded-md text-sm font-medium ${
+                          !scrolled && isHomePage
+                            ? 'bg-white/20 hover:bg-white/30 text-white'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        } theme-transition`}
+                      >
+                        注册
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -308,8 +386,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </nav>
       )}
 
-      {/* 页面内容 */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* 页面内容 - 首页不添加顶部间距，其他页面保持 */}
+      <main className={`flex-grow w-full ${!isAuthPage && !isHomePage ? 'pt-16' : ''}`}>
         {children}
       </main>
 

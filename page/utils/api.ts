@@ -95,9 +95,20 @@ export const fileApi = {
   getUserFiles: () => {
     return api.get('/api/files');
   },
+  getPublicFiles: (limit: number = 10, offset: number = 0) => {
+    return api.get('/api/public/files', {
+      params: { limit, offset }
+    });
+  },
   deleteFile: (fileId: number) => {
     return api.delete('/api/files', {
       data: { fileId }
+    });
+  },
+  updateFileStatus: (fileId: number, isPublic: boolean) => {
+    return api.put('/api/files/status', {
+      fileId,
+      isPublic
     });
   }
 };

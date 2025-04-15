@@ -52,6 +52,17 @@ const FilesPage = () => {
     setFiles((prevFiles) => prevFiles.filter((file) => file.id !== id));
   };
 
+  // 处理文件状态变更
+  const handleFileStatusChange = (fileId: number, isPublic: boolean) => {
+    setFiles((prevFiles) => 
+      prevFiles.map((file) => 
+        file.id === fileId 
+          ? { ...file, is_public: isPublic ? 1 : 0 } 
+          : file
+      )
+    );
+  };
+
   // 渲染骨架屏
   const renderSkeletons = () => {
     return Array(6).fill(0).map((_, index) => (
@@ -120,6 +131,7 @@ const FilesPage = () => {
                 file={file} 
                 onDelete={handleDeleteFile} 
                 onPreview={file.file_type.startsWith('image/') ? () => handlePreviewImage(file) : undefined} 
+                onStatusChange={handleFileStatusChange}
               />
             ))}
           </div>

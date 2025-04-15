@@ -20,6 +20,7 @@ export interface FileItem {
   file_size: number;
   file_type: string;
   uploaded_at: string;
+  is_public: number; // 0表示私有，1表示公开
   username?: string; // 管理员查看全部文件时包含用户名
 }
 

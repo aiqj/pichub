@@ -1,11 +1,10 @@
-import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import Button from '../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { CodeSnippet } from '../types';
+import Button from '../components/ui/Button';
+import { fileApi } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import { fileApi } from '../utils/api';
 
 // 动态导入图片预览组件
 const ImagePreview = dynamic(() => import('../components/ImagePreview'), {
@@ -13,627 +12,351 @@ const ImagePreview = dynamic(() => import('../components/ImagePreview'), {
   ssr: false
 });
 
+// 文件类型图标
+const FileTypeIcon = ({ type }: { type: string }) => {
+  const getIconByType = (fileType: string) => {
+    const type = fileType.split('/')[1]?.toUpperCase() || 'FILE';
+    
+    return (
+      <div className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md border border-gray-200 dark:border-gray-700 theme-transition">
+        {type}
+      </div>
+    );
+  };
+  
+  return getIconByType(type);
+};
+
 const Home = () => {
   const router = useRouter();
-  const { isAuthenticated, user, login, loading } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [files, setFiles] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ total: 0, limit: 10, offset: 0, hasMore: false });
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewName, setPreviewName] = useState('');
   const apiEndpoint = process.env.NEXT_PUBLIC_API_HOST || '';
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadResult, setUploadResult] = useState<any>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [uploadedData, setUploadedData] = useState<CodeSnippet | null>(null);
-  const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
-  const [uploadProgress, setUploadProgress] = useState<number>(0);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [showImagePreview, setShowImagePreview] = useState<boolean>(false);
-  const [isDragging, setIsDragging] = useState(false);
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // 检查认证状态并重定向
-  useEffect(() => {
-    if (!loading && !isAuthenticated && typeof window !== 'undefined') {
-      router.push('/login');
-    }
-  }, [isAuthenticated, loading, router]);
-  
+
   // 格式化文件大小
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
-    
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  
-  // 处理文件粘贴上传
-  useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (e.clipboardData && e.clipboardData.files.length > 0) {
-        const pastedFile = e.clipboardData.files[0];
-        if (pastedFile.type.startsWith('image/')) {
-          setSelectedFile(pastedFile);
-          handleUpload(pastedFile);
-        }
-      }
-    };
+
+  // 格式化上传日期
+  const formatUploadTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     
-    window.addEventListener('paste', handlePaste);
-    
-    return () => {
-      window.removeEventListener('paste', handlePaste);
-    };
-  }, []);
-  
-  // 处理文件拖放
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && isValidFile(droppedFile)) {
-      setSelectedFile(droppedFile);
-      setErrorMsg('');
-      
-      // 生成预览URL
-      const objectUrl = URL.createObjectURL(droppedFile);
-      setPreviewUrl(objectUrl);
+    if (diffDays === 0) {
+      return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays < 7) {
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      return `星期${weekdays[date.getDay()]} ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+      return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) + ' ' + 
+        date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
     }
   };
-  
-  // 处理文件选择
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (isValidFile(selectedFile)) {
-        setSelectedFile(selectedFile);
-        setErrorMsg('');
-        
-        // 生成预览URL
-        const objectUrl = URL.createObjectURL(selectedFile);
-        setPreviewUrl(objectUrl);
-        
-        // 返回一个清理函数，在组件卸载时释放URL
-        return () => {
-          URL.revokeObjectURL(objectUrl);
-        };
-      }
-    }
-  };
-  
-  // 处理文件上传
-  const handleUpload = async (file: File) => {
-    if (!file) return;
-    
-    setIsUploading(true);
-    setErrorMsg(null);
-    setUploadProgress(0); // 重置上传进度
-    setShowImagePreview(false); // 确保关闭之前可能打开的预览模态框
+
+  // 加载公开文件
+  const loadPublicFiles = async (offset = 0) => {
+    setLoading(true);
+    setError(null);
     
     try {
-      const response = await fileApi.uploadFile(file, (progress) => {
-        setUploadProgress(progress);
-      }).then(res => {
-        setIsUploading(false);
-        return res;
-      }).catch(error => {
-        setIsUploading(false);
-        if (error.response) {
-          throw new Error(error.response.data?.message || error.response.data?.error || '上传失败，请重试');
+      const response = await fileApi.getPublicFiles(10, offset);
+      if (response.data && response.data.files) {
+        if (offset === 0) {
+          setFiles(response.data.files);
         } else {
-          throw new Error('网络错误，请检查连接');
+          setFiles(prev => [...prev, ...response.data.files]);
         }
-      });
-
-      // 处理成功响应  
-      const responseData = response.data;
-      setUploadResult(responseData);
-      
-      if (responseData.success && responseData.url) {
-        const url = responseData.url;
-        const originalName = responseData.originalName || '上传图片';
-        const uploadData = {
-          url: url,
-          htmlCode: `<img src="${url}" alt="${originalName}" />`,
-          markdownCode: `![${originalName}](${url})`
-        };
-        
-        setUploadedData(uploadData);
-        setPreviewUrl(url);
-      } else if (responseData.data && responseData.data.url) {
-        const url = responseData.data.url;
-        const originalName = responseData.data.originalName || '上传图片';
-        const uploadData = {
-          url: url,
-          htmlCode: `<img src="${url}" alt="${originalName}" />`,
-          markdownCode: `![${originalName}](${url})`
-        };
-        
-        setUploadedData(uploadData);
-        setPreviewUrl(url);
+        setPagination(response.data.pagination);
       } else {
-        let url = '';
-        let originalName = '上传图片';
-        
-        for (const key in responseData) {
-          if (typeof responseData[key] === 'string' && 
-             (responseData[key].startsWith('http') || responseData[key].startsWith('/uploads'))) {
-            url = responseData[key];
-            break;
-          }
-        }
-        
-        if (responseData.originalName || responseData.filename) {
-          originalName = responseData.originalName || responseData.filename;
-        }
-        
-        if (url) {
-          const uploadData = {
-            url: url,
-            htmlCode: `<img src="${url}" alt="${originalName}" />`,
-            markdownCode: `![${originalName}](${url})`
-          };
-          
-          setUploadedData(uploadData);
-          setPreviewUrl(url);
-        } else {
-          setErrorMsg('上传成功但无法获取图片链接');
-        }
+        setError('获取图片列表失败');
       }
-      
-      setSelectedFile(null);
-    } catch (error) {
-      setErrorMsg(error instanceof Error ? error.message : '上传失败，请重试');
-      setIsUploading(false);
+    } catch (err) {
+      setError('无法加载图片，请稍后再试');
+      console.error('Failed to load public files:', err);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // 复制URL
-  const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        setCopyStatus(prev => ({
-          ...prev,
-          [type]: true
-        }));
-        
-        // 2秒后重置复制状态
-        setTimeout(() => {
-          setCopyStatus(prev => ({
-            ...prev,
-            [type]: false
-          }));
-        }, 2000);
-      })
-      .catch(err => {
-        setErrorMsg('复制失败，请手动复制');
-      });
-  };
-  
-  // 重置状态，准备下一次上传
-  const handleReset = () => {
-    setUploadResult(null);
-    setUploadedData(null);
-    setSelectedFile(null);
-    setErrorMsg(null);
-    setPreviewUrl(null);
-    setShowImagePreview(false); // 确保关闭预览模态框
-    setCopyStatus({});
-    setUploadProgress(0);
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+
+  // 加载更多文件
+  const loadMore = () => {
+    if (pagination.hasMore) {
+      loadPublicFiles(pagination.offset + pagination.limit);
     }
   };
-  
-  // 清理预览URL
+
+  // 打开图片预览
+  const openPreview = (file: any) => {
+    const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
+    setPreviewUrl(imageUrl);
+    setPreviewName(file.original_name);
+    setShowPreview(true);
+  };
+
+  // 初始加载
   useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
-  
-  // 验证文件类型和大小
-  const isValidFile = React.useCallback((file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    
-    if (!validTypes.includes(file.type)) {
-      setErrorMsg('不支持的文件类型。请上传JPEG, PNG, WebP, GIF或SVG图片。');
-      return false;
-    }
-    
-    if (file.size > maxSize) {
-      setErrorMsg(`文件大小超过限制（最大50MB）。当前文件大小：${formatFileSize(file.size)}`);
-      return false;
-    }
-    
-    return true;
-  }, [setErrorMsg]);
-  
-  // 图片预览模态框
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="w-16 h-16 border-t-4 border-indigo-500 border-solid rounded-full animate-spin"></div>
-        <p className="mt-4 text-gray-400">加载中...</p>
+    loadPublicFiles();
+  }, []);
+
+  return (
+    <div className="min-h-screen">
+      {/* 顶部横幅 - 100%宽度的紫色背景 */}
+      <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 pb-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="md:w-1/2 text-white space-y-8 mb-10 md:mb-0">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold">
+                  简单、高效的图片托管服务
+                </h1>
+                <p className="text-lg mt-4 text-white/90">
+                  安全托管您的图片，轻松分享到任何地方。支持多种格式，高速加载，永久存储。
+                </p>
+              </div>
+            </div>
+            <div className="md:w-5/12">
+              <div className="relative">
+                <div className="absolute inset-0 backdrop-blur-sm rounded-xl border-4 border-white/20 shadow-2xl scale-[0.98] translate-x-2 translate-y-2 z-0"></div>
+                <div className="relative rounded-xl overflow-hidden border-4 border-white/30 shadow-2xl z-10">
+                  <div className="grid grid-cols-4 grid-rows-3 gap-2 p-3 bg-white/5 backdrop-blur-sm">
+                    <div className="col-span-3 row-span-3 rounded-lg overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                        alt="风景"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="col-span-1 rounded-lg overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                        alt="花卉"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="col-span-1 row-span-2 rounded-lg overflow-hidden">
+                      <img 
+                        src="https://images.unsplash.com/photo-1516616370751-86d6bd8b0651?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                        alt="建筑"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    );
-  }
-  
-  // 如果未认证，显示登录提示
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-screen">
-          <h1 className="text-4xl md:text-6xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500">
-            PicHub
-          </h1>
-          <p className="text-xl md:text-2xl text-center mb-12 text-gray-300">
-            简单、安全、高效的图片托管服务
+      
+      {/* 为什么选择 PicHub */}
+      <div className="py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-16">
+            为什么选择 <span className="text-purple-600">PicHub</span>
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white shadow-md rounded-xl p-8 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-purple-100 rounded-full">
+                <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">快速上传</h3>
+              <p className="text-gray-600">上传速度快，无需等待，支持拖拽、粘贴、点击多种上传方式。</p>
+            </div>
+            
+            <div className="bg-white shadow-md rounded-xl p-8 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-blue-100 rounded-full">
+                <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">安全可靠</h3>
+              <p className="text-gray-600">采用先进的加密和存储技术，确保您的图片安全存储，不会丢失。</p>
+            </div>
+            
+            <div className="bg-white shadow-md rounded-xl p-8 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-indigo-100 rounded-full">
+                <svg className="w-10 h-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">灵活分享</h3>
+              <p className="text-gray-600">多种分享方式，支持直接链接、HTML和Markdown格式，适用于各种场景。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 最新公开图片 */}
+      <div className="w-full bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <h2 className="text-3xl font-bold text-center mb-4 text-gray-800">
+            最新公开图片
+          </h2>
+          <p className="text-center text-gray-600 mb-12">
+            探索用户分享的精彩图片，获取灵感，发现美好
           </p>
           
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-8 w-full max-w-md mb-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-200">未登录</h2>
-              <p className="text-gray-400 mb-8">请登录后使用图片上传功能</p>
-              {errorMsg && (
-                <div className="mb-6 p-3 bg-red-900/40 border border-red-700/50 rounded-lg text-red-400">
-                  {errorMsg}
+          {loading && files.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md animate-pulse">
+                  <div className="aspect-video bg-gray-200"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
-            
-            <div className="flex gap-2 justify-center">
+          ) : error ? (
+            <div className="text-center p-8 bg-red-50 border border-red-100 rounded-xl">
+              <p className="text-red-600">{error}</p>
               <Button 
                 variant="primary" 
-                onClick={() => router.push('/login')}
+                className="mt-4"
+                onClick={() => loadPublicFiles()}
               >
-                前往登录
-              </Button>
-              
-              <Button 
-                variant="secondary" 
-                onClick={() => {
-                  const savedToken = localStorage.getItem('token');
-                  const savedUser = localStorage.getItem('user');
-                  
-                  if (savedToken && savedUser) {
-                    try {
-                      const userData = JSON.parse(savedUser);
-                      login(savedToken, userData);
-                      // 使用router.push代替窗口刷新，避免闪屏
-                      router.push('/'); 
-                    } catch (e) {
-                      setErrorMsg('无法恢复会话，请重新登录');
-                    }
-                  } else {
-                    setErrorMsg('无本地登录信息，请重新登录');
-                  }
-                }}
-              >
-                尝试恢复会话
+                重试
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // 以下是已认证用户的界面
-  return (
-    <div className="flex flex-col items-center">
-      <h1 className="hidden text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-6">
-        文件上传
-      </h1>
-      
-      <div className="w-full max-w-3xl bg-white/80 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl p-8 shadow-2xl theme-transition">
-        {!uploadResult ? (
-          <>
-            <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all theme-transition ${
-                isDragging
-                  ? 'border-indigo-500 bg-indigo-500/10'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-gray-700/30'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
-                onChange={handleFileChange}
-              />
-              
-              <div className="flex flex-col items-center justify-center space-y-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-16 w-16 ${isDragging ? 'text-indigo-500 dark:text-indigo-400' : 'text-gray-400 dark:text-gray-500'} theme-transition`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                <p className="text-lg text-gray-700 dark:text-gray-300 font-medium theme-transition">
-                  {isDragging ? '释放文件以上传' : '拖放文件或点击此处选择'}
-                </p>
-                <p className="text-sm text-gray-500 theme-transition">
-                  支持 JPEG, PNG, WebP, GIF, SVG 格式，最大50MB
-                </p>
-              </div>
-            </div>
-            
-            {selectedFile && (
-              <div className="mt-4 p-4 bg-gray-100/70 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-600 theme-transition">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-gray-700 dark:text-gray-200 font-medium theme-transition">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 theme-transition">
-                      {selectedFile.type} - {formatFileSize(selectedFile.size)}
-                    </p>
-                  </div>
-                  <div className="flex space-x-2">
-                    {previewUrl && (
-                      <Button
-                        variant="secondary"
-                        onClick={() => setShowImagePreview(true)}
-                      >
-                        预览
-                      </Button>
-                    )}
-                    <Button
-                      variant="primary"
-                      onClick={() => handleUpload(selectedFile)}
-                      loading={isUploading}
-                      disabled={isUploading}
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {files.map((file) => {
+                  const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
+                  return (
+                    <div 
+                      key={file.id} 
+                      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
+                      onClick={() => openPreview(file)}
                     >
-                      {isUploading ? '上传中...' : '上传'}
-                    </Button>
-                  </div>
-                </div>
-                
-                {isUploading && (
-                  <div className="mt-3">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 theme-transition overflow-hidden relative">
-                      <div 
-                        className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-3 rounded-full transition-all duration-300 relative"
-                        style={{ width: `${uploadProgress}%` }}
-                      >
-                        <div className="absolute inset-0 bg-white/20 animate-shimmer bg-200%"></div>
+                      <div className="aspect-video bg-gray-100 overflow-hidden relative">
+                        <img 
+                          src={imageUrl} 
+                          alt={file.original_name}
+                          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-2 right-2">
+                          <FileTypeIcon type={file.file_type} />
+                        </div>
                       </div>
-                      {/* 添加光滑的闪烁效果 */}
-                      <div 
-                        className="absolute h-full w-20 bg-white/10 animate-shimmer bg-200% skew-x-30"
-                        style={{ 
-                          left: `${uploadProgress - 20}%`,
-                          opacity: uploadProgress > 10 ? 1 : 0,
-                          transition: 'opacity 0.3s ease'
-                        }}
-                      ></div>
+                      <div className="p-4">
+                        <h3 className="font-medium text-gray-800 truncate" title={file.original_name}>
+                          {file.original_name}
+                        </h3>
+                        <div className="flex justify-between mt-2 text-xs text-gray-500">
+                          <span>{formatFileSize(file.file_size)}</span>
+                          <span 
+                            className="group relative cursor-help"
+                            title={file.uploaded_at}
+                          >
+                            {formatUploadTime(file.uploaded_at)}
+                            <span className="absolute bottom-full right-0 mb-2 w-44 rounded bg-black/80 p-1 text-center text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
+                              {new Date(file.uploaded_at).toLocaleString('zh-CN')}
+                            </span>
+                          </span>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>{file.username}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs mt-1">
-                      <p className="text-gray-500 dark:text-gray-400 theme-transition">上传中，请稍候...</p>
-                      <p className="text-gray-700 dark:text-gray-300 font-medium theme-transition">{uploadProgress}%</p>
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            )}
-            
-            {/* 图片预览模态框 */}
-            {showImagePreview && previewUrl && (
-              <ImagePreview 
-                imageUrl={previewUrl} 
-                onClose={() => setShowImagePreview(false)}
-                alt={selectedFile?.name || '预览图片'}
-              />
-            )}
-            
-            {errorMsg && (
-              <div className="mt-4 p-4 bg-red-100/80 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 theme-transition">
-                {errorMsg}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="flex flex-col items-center space-y-6">
-            <div className="rounded-full bg-green-100/80 dark:bg-green-900/30 p-4 border border-green-200 dark:border-green-800 theme-transition">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12 text-green-600 dark:text-green-500 theme-transition"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-            
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 theme-transition">上传成功！</h2>
-            
-            {uploadedData ? (
-              <div className="w-full space-y-4 mt-4">
-                {/* 图片预览模态框 */}
-                {showImagePreview && previewUrl && (
-                  <ImagePreview 
-                    imageUrl={previewUrl} 
-                    onClose={() => setShowImagePreview(false)}
-                    alt="上传图片预览"
-                  />
-                )}
-                
-                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">直接链接</span>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => copyToClipboard(uploadedData.url, 'url')}
-                    >
-                      {copyStatus.url ? '已复制！' : '复制'}
-                    </Button>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
-                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.url}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">HTML代码</span>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => copyToClipboard(uploadedData.htmlCode, 'html')}
-                    >
-                      {copyStatus.html ? '已复制！' : '复制'}
-                    </Button>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
-                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.htmlCode}</p>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-100/70 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-700 dark:text-gray-300 font-medium theme-transition">Markdown代码</span>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => copyToClipboard(uploadedData.markdownCode, 'markdown')}
-                    >
-                      {copyStatus.markdown ? '已复制！' : '复制'}
-                    </Button>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-md theme-transition">
-                    <p className="text-gray-700 dark:text-gray-400 break-all text-sm theme-transition">{uploadedData.markdownCode}</p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-center mt-6">
+              
+              {pagination.hasMore && (
+                <div className="flex justify-center mt-10">
                   <Button 
                     variant="secondary" 
-                    onClick={() => {
-                      setShowImagePreview(true);
-                    }}
-                    className="mr-3"
+                    onClick={loadMore}
+                    loading={loading}
+                    disabled={loading}
                   >
-                    查看图片
-                  </Button>
-                  <Button variant="primary" onClick={handleReset}>
-                    重新上传
+                    {loading ? '加载中...' : '加载更多图片'}
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <div className="text-center mt-4 mb-6">
-                <p className="text-gray-700 dark:text-gray-300 theme-transition">图片已上传但无法获取详细链接信息</p>
-                <Button variant="primary" onClick={handleReset} className="mt-4">
-                  重新上传
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+              
+              {files.length === 0 && !loading && (
+                <div className="text-center p-12 bg-white border border-gray-200 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-gray-600 text-lg">还没有公开的图片</p>
+                  <Button 
+                    variant="primary" 
+                    className="mt-4"
+                    onClick={() => router.push('/upload')}
+                  >
+                    上传第一张图片
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
       
-      <div className="mt-12 max-w-3xl w-full text-center">
-        <h2 className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 mb-4">
-          关于PicHub
-        </h2>
-        <p className="text-gray-700 dark:text-gray-300 mb-4 theme-transition">
-          PicHub是一个高效、安全的图像管理平台，支持多种图像格式，提供便捷的图像分享和管理功能。
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+      {/* 底部行动号召 */}
+      <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">准备好开始使用了吗？</h2>
+          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
+            现在就开始上传您的图片，获取更好的托管体验，安全、高效、便捷。
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button 
+              variant="secondary" 
+              size="lg"
+              onClick={() => router.push('/upload')}
+              className="bg-white text-indigo-600 hover:bg-gray-100"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">多格式支持</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">支持JPEG, PNG, WebP, GIF, SVG等多种图像格式</p>
-          </div>
-          
-          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">安全存储</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">使用先进的加密技术确保您的图像安全存储</p>
-          </div>
-          
-          <div className="bg-white/80 dark:bg-gray-800/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700 theme-transition">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-indigo-600 dark:text-indigo-400 mx-auto mb-2 theme-transition"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200 theme-transition">便捷分享</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 theme-transition">一键复制多种格式的链接代码，方便在各种平台分享</p>
+              立即上传
+            </Button>
+            {!isAuthenticated && (
+              <Button 
+                variant="primary" 
+                size="lg"
+                onClick={() => router.push('/register')}
+                className="bg-transparent border-2 border-white hover:bg-white/10"
+              >
+                注册账号
+              </Button>
+            )}
           </div>
         </div>
       </div>
+      
+      {/* 图片预览 */}
+      {showPreview && (
+        <ImagePreview 
+          imageUrl={previewUrl} 
+          onClose={() => setShowPreview(false)}
+          alt={previewName}
+        />
+      )}
     </div>
   );
 };

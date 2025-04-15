@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Button from '../components/ui/Button';
@@ -27,6 +27,148 @@ const FileTypeIcon = ({ type }: { type: string }) => {
   return getIconByType(type);
 };
 
+// 赛博朋克风格的数字雨效果
+const DigitalRain = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const fontSize = 12;
+    const columns = Math.floor(canvas.width / fontSize);
+    const drops: number[] = [];
+    
+    // 初始化雨滴位置
+    for (let i = 0; i < columns; i++) {
+      drops[i] = Math.random() * -100;
+    }
+    
+    // 可用的字符集 - 赛博朋克风格的混合字符
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&*<=>/\\';
+    
+    // 绘制数字雨
+    const draw = () => {
+      // 半透明黑色背景，形成拖尾效果
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // 设置文本样式
+      ctx.fillStyle = '#0ff'; // 青色
+      ctx.font = `${fontSize}px monospace`;
+      
+      // 逐列绘制字符
+      for (let i = 0; i < drops.length; i++) {
+        // 随机选择字符
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        
+        // 计算x坐标
+        const x = i * fontSize;
+        
+        // 计算y坐标
+        const y = drops[i] * fontSize;
+        
+        // 随机改变一些字符的颜色
+        if (Math.random() > 0.98) {
+          ctx.fillStyle = '#f0f'; // 紫色
+        } else if (Math.random() > 0.95) {
+          ctx.fillStyle = '#ff0'; // 黄色
+        } else {
+          ctx.fillStyle = '#0ff'; // 默认青色
+        }
+        
+        // 绘制字符
+        ctx.fillText(char, x, y);
+        
+        // 随机重置一些雨滴的位置
+        if (y > canvas.height && Math.random() > 0.99) {
+          drops[i] = 0;
+        }
+        
+        // 雨滴下落
+        drops[i]++;
+      }
+      
+      requestAnimationFrame(draw);
+    };
+    
+    draw();
+    
+    // 响应窗口大小变化
+    const handleResize = () => {
+      if (canvas) {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full opacity-30" />;
+};
+
+// 电路板图案组件
+const CircuitPattern = () => {
+  return (
+    <div className="absolute inset-0 opacity-10">
+      <div className="absolute w-full h-full bg-circuit-pattern"></div>
+      {/* 电路节点 */}
+      <div className="absolute top-1/4 left-1/5 w-2 h-2 bg-cyan-500 rounded-full shadow-glow-cyan"></div>
+      <div className="absolute top-1/3 right-1/4 w-3 h-3 bg-purple-500 rounded-full shadow-glow-purple"></div>
+      <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-cyan-500 rounded-full shadow-glow-cyan"></div>
+      <div className="absolute bottom-1/3 right-1/5 w-2 h-2 bg-pink-500 rounded-full shadow-glow-pink animate-pulse-slow"></div>
+    </div>
+  );
+};
+
+// 扫描线动画
+const ScanLine = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-70 animate-scan-line"></div>
+    </div>
+  );
+};
+
+// 标题动画文字效果
+const GlitchText = ({ text, className = "" }: { text: string; className?: string }) => {
+  return (
+    <span className={`relative inline-block ${className}`}>
+      <span className="relative z-10">{text}</span>
+      <span className="absolute top-0 left-0 -z-10 text-pink-500 animate-glitch-1 opacity-70">{text}</span>
+      <span className="absolute top-0 left-0 -z-20 text-cyan-500 animate-glitch-2 opacity-70">{text}</span>
+    </span>
+  );
+};
+
+// 高科技UI框
+const TechFrame = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <div className={`relative border border-cyan-500/30 bg-black/60 backdrop-blur-md rounded-md overflow-hidden ${className}`}>
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
+      <div className="absolute top-0 left-0 h-full w-px bg-gradient-to-b from-transparent via-cyan-500 to-transparent"></div>
+      <div className="absolute top-0 right-0 h-full w-px bg-gradient-to-b from-transparent via-cyan-500 to-transparent"></div>
+      
+      {/* 角落装饰 */}
+      <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-cyan-500"></div>
+      <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-cyan-500"></div>
+      <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-cyan-500"></div>
+      <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-cyan-500"></div>
+      
+      {children}
+    </div>
+  );
+};
+
 const Home = () => {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
@@ -38,7 +180,16 @@ const Home = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewName, setPreviewName] = useState('');
   const apiEndpoint = process.env.NEXT_PUBLIC_API_HOST || '';
-
+  const [typedText, setTypedText] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
+  const fullText = "PicHub 超越云端的图像托管平台";
+  const statistics = [
+    { label: "已上传图片", value: "134,582", icon: "📊" },
+    { label: "全球用户", value: "25,471", icon: "🌐" },
+    { label: "传输速度", value: "12ms", icon: "⚡" },
+    { label: "可用率", value: "99.9%", icon: "��️" },
+  ];
+  
   // 格式化文件大小
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -47,7 +198,7 @@ const Home = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-
+  
   // 格式化上传日期
   const formatUploadTime = (dateString: string): string => {
     const date = new Date(dateString);
@@ -108,53 +259,285 @@ const Home = () => {
     setShowPreview(true);
   };
 
-  // 初始加载
+  // 初始加载和打字机效果
   useEffect(() => {
     loadPublicFiles();
+    
+    // 打字机效果
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (currentIndex <= fullText.length) {
+        setTypedText(fullText.slice(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        // 光标闪烁效果继续
+      }
+    }, 100);
+    
+    // 设置时钟
+    const updateClock = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    };
+    
+    // 立即更新一次
+    updateClock();
+    
+    // 每秒更新一次
+    const clockInterval = setInterval(updateClock, 1000);
+    
+    return () => {
+      clearInterval(typingInterval);
+      clearInterval(clockInterval);
+    };
   }, []);
 
   return (
     <div className="min-h-screen">
-      {/* 顶部横幅 - 100%宽度的紫色背景 */}
-      <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 text-white space-y-8 mb-10 md:mb-0">
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold">
-                  简单、高效的图片托管服务
-                </h1>
-                <p className="text-lg mt-4 text-white/90">
-                  安全托管您的图片，轻松分享到任何地方。支持多种格式，高速加载，永久存储。
-                </p>
+      {/* 科技感十足的顶部横幅 */}
+      <div className="relative overflow-hidden bg-black min-h-[90vh] flex items-center">
+        {/* 底层背景效果 */}
+        <div className="absolute inset-0 bg-gradient-radial from-blue-900/20 via-black to-black z-0"></div>
+        
+        {/* 数字雨背景 */}
+        <DigitalRain />
+        
+        {/* 电路图案 */}
+        <CircuitPattern />
+        
+        {/* 扫描线 */}
+        <ScanLine />
+        
+        {/* 主内容 */}
+        <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* 赛博朋克风格的状态栏 */}
+          <div className="flex items-center justify-between text-xs text-cyan-500 font-mono mb-12">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse mr-2"></span>
+                <span>SYS.STATUS: ONLINE</span>
+              </div>
+              <div className="hidden md:flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                <span>ENCRYPTION: ACTIVE</span>
               </div>
             </div>
-            <div className="md:w-5/12">
-              <div className="relative">
-                <div className="absolute inset-0 backdrop-blur-sm rounded-xl border-4 border-white/20 shadow-2xl scale-[0.98] translate-x-2 translate-y-2 z-0"></div>
-                <div className="relative rounded-xl overflow-hidden border-4 border-white/30 shadow-2xl z-10">
-                  <div className="grid grid-cols-4 grid-rows-3 gap-2 p-3 bg-white/5 backdrop-blur-sm">
-                    <div className="col-span-3 row-span-3 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                        alt="风景"
-                        className="w-full h-full object-cover"
-                      />
+            <div className="hidden md:flex items-center space-x-4">
+              <span>{new Date().toISOString().split('T')[0]}</span>
+              <span id="digitalClock" className="tabular-nums">
+                {currentTime}
+              </span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch">
+            {/* 左侧内容区域 (占3列) */}
+            <div className="lg:col-span-3 space-y-8">
+              {/* 主标题 */}
+              <div>
+                <div className="inline-flex items-center px-3 py-1 mb-4 bg-gradient-to-r from-cyan-500/20 to-pink-500/20 border border-cyan-500/30 rounded-full">
+                  <span className="text-cyan-500 text-xs font-mono">V2.0.4_CYBERHUB</span>
+                </div>
+                
+                <h1 className="text-5xl md:text-7xl font-black text-white mb-2 leading-tight tracking-tight">
+                  <GlitchText text="PICHUB" className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600" />
+                  <span className="block text-3xl md:text-4xl mt-2 font-light">
+                    {typedText}
+                    <span className="inline-block w-2 h-6 bg-cyan-400 animate-blink align-text-bottom ml-1"></span>
+                  </span>
+                </h1>
+                
+                <p className="text-cyan-100 text-lg max-w-xl mt-6 font-light leading-relaxed">
+                  突破传统存储限制，采用量子级加密技术，毫秒级全球传输，
+                  <span className="text-cyan-400">重新定义</span>
+                  图片托管的未来形态。
+                </p>
+              </div>
+              
+              {/* 数据统计 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {statistics.map((stat, index) => (
+                  <TechFrame key={index} className="p-4 group hover:bg-cyan-900/20 transition-all duration-300">
+                    <div className="text-center">
+                      <div className="text-2xl mb-1 group-hover:scale-110 transition-transform">{stat.icon}</div>
+                      <div className="text-cyan-400 font-mono text-xl font-bold">{stat.value}</div>
+                      <div className="text-cyan-100 text-sm">{stat.label}</div>
                     </div>
-                    <div className="col-span-1 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                        alt="花卉"
-                        className="w-full h-full object-cover"
-                      />
+                  </TechFrame>
+                ))}
+              </div>
+              
+              {/* 功能卡片 */}
+              <TechFrame className="p-6 mt-8">
+                <h3 className="text-cyan-400 text-lg mb-4 font-mono tracking-wider flex items-center">
+                  <span className="inline-block w-1 h-6 bg-cyan-400 mr-3"></span>
+                  系统核心功能
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-black to-blue-900/30 p-4 rounded-md border border-blue-500/20 hover:border-blue-500/50 transition-all">
+                    <div className="text-blue-400 mb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      量子级加密
                     </div>
-                    <div className="col-span-1 row-span-2 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1516616370751-86d6bd8b0651?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                        alt="建筑"
-                        className="w-full h-full object-cover"
-                      />
+                    <p className="text-gray-400 text-sm">采用前沿加密算法，提供无与伦比的安全性能</p>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-black to-pink-900/30 p-4 rounded-md border border-pink-500/20 hover:border-pink-500/50 transition-all">
+                    <div className="text-pink-400 mb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      闪电传输
                     </div>
+                    <p className="text-gray-400 text-sm">全球边缘节点分发，毫秒级响应，极致体验</p>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-black to-purple-900/30 p-4 rounded-md border border-purple-500/20 hover:border-purple-500/50 transition-all">
+                    <div className="text-purple-400 mb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      </svg>
+                      AI增强
+                    </div>
+                    <p className="text-gray-400 text-sm">智能图像处理，自动标签分类，强大搜索功能</p>
+                  </div>
+                </div>
+              </TechFrame>
+              
+              {/* 行动按钮区 */}
+              <div className="flex flex-wrap gap-4 mt-8">
+                <Button 
+                  variant="primary"
+                  onClick={() => router.push('/upload')}
+                  className="bg-gradient-to-r from-cyan-500 to-blue-600 border-0 text-white py-3 px-8 shadow-glow-cyan hover:-translate-y-1 transition-all duration-300"
+                >
+                  <span className="flex items-center">
+                    开始上传
+                    <svg className="ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </span>
+                </Button>
+                
+                <Button 
+                  variant="secondary"
+                  onClick={() => router.push('/dashboard')}
+                  className="bg-transparent border border-cyan-500/50 text-cyan-400 hover:bg-cyan-900/20 py-3 px-6 transition-all duration-300"
+                >
+                  进入控制台
+                </Button>
+              </div>
+            </div>
+            
+            {/* 右侧全息图区域 (占2列) */}
+            <div className="lg:col-span-2 flex items-center justify-center">
+              <div className="relative w-full max-w-md">
+                {/* 全息投影效果 */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 via-blue-500/10 to-purple-500/20 blur-xl rounded-full"></div>
+                
+                {/* 主要显示内容 */}
+                <TechFrame className="rounded-lg overflow-hidden">
+                  {/* 顶部状态栏 */}
+                  <div className="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 px-4 py-2 flex justify-between items-center border-b border-cyan-500/30">
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    </div>
+                    <div className="text-xs text-cyan-400 font-mono">IMAGE-VIEWER.SYS</div>
+                  </div>
+                  
+                  {/* 图片显示区 */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="aspect-square bg-gradient-to-br from-cyan-900/20 to-blue-900/20 rounded-md overflow-hidden border border-cyan-500/30 hover:border-cyan-500/70 transition-all group">
+                        <img 
+                          src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                          alt="抽象科技图" 
+                          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                        />
+                      </div>
+                      <div className="aspect-square bg-gradient-to-br from-pink-900/20 to-purple-900/20 rounded-md overflow-hidden border border-pink-500/30 hover:border-pink-500/70 transition-all group">
+                        <img 
+                          src="https://images.unsplash.com/photo-1624913503273-5f9c4e980dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                          alt="科技图像" 
+                          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* 控制面板 */}
+                    <div className="mb-4 p-3 bg-cyan-900/20 rounded-md border border-cyan-500/30">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="text-cyan-400 text-xs font-mono">系统状态</div>
+                        <div className="text-green-400 text-xs font-mono flex items-center">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse mr-1"></span>
+                          在线
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                          <div className="h-full w-4/5 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full"></div>
+                        </div>
+                        <div className="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                          <div className="h-full w-3/5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"></div>
+                        </div>
+                        <div className="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                          <div className="h-full w-9/10 bg-gradient-to-r from-green-500 to-cyan-500 rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* 命令行区域 */}
+                    <div className="bg-black/70 rounded-md border border-cyan-500/30 p-3 font-mono text-xs text-cyan-300">
+                      <div className="mb-1">$ initialize_system --secure</div>
+                      <div className="mb-1 text-green-400">{"> "}系统初始化完成</div>
+                      <div className="mb-1">$ connect --global_nodes</div>
+                      <div className="mb-1 text-green-400">{"> "}已连接全球38个节点</div>
+                      <div className="mb-1">$ status --uptime</div>
+                      <div className="text-yellow-400">{"> "}系统运行时间: 382天14小时</div>
+                    </div>
+                  </div>
+                  
+                  {/* 底部控制栏 */}
+                  <div className="px-4 py-3 border-t border-cyan-500/30 flex justify-between items-center bg-gradient-to-r from-black to-blue-900/20">
+                    <div className="flex space-x-3">
+                      <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </div>
+                    
+                    <div className="text-xs bg-cyan-900/30 border border-cyan-500/30 px-2 py-0.5 rounded text-cyan-400">
+                      <span className="animate-pulse">●</span> LIVE
+                    </div>
+                  </div>
+                </TechFrame>
+                
+                {/* 装饰性浮动小元素 */}
+                <div className="absolute top-0 -right-8 animate-float-slow">
+                  <div className="w-24 h-24 rounded-lg border border-cyan-500/30 backdrop-blur-sm bg-gradient-to-br from-cyan-500/5 to-blue-500/10 rotate-12 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-cyan-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                  </div>
+                </div>
+                
+                <div className="absolute -bottom-6 -left-6 animate-float">
+                  <div className="w-16 h-16 rounded-full border border-pink-500/30 backdrop-blur-sm bg-gradient-to-br from-pink-500/10 to-purple-500/5 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-pink-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -229,7 +612,7 @@ const Home = () => {
           ) : error ? (
             <div className="text-center p-8 bg-red-50 border border-red-100 rounded-xl">
               <p className="text-red-600">{error}</p>
-              <Button 
+              <Button
                 variant="primary" 
                 className="mt-4"
                 onClick={() => loadPublicFiles()}

@@ -125,7 +125,7 @@ const Home = () => {
         <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
           <div className="flex flex-col md:flex-row items-center justify-between gap-16">
             {/* 左侧内容区 */}
-            <div className="md:w-5/12 space-y-8">
+            <div className="md:w-5/12 space-y-8 md:pt-16">
               <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
                 PicHub
                 <span className="block text-4xl md:text-5xl text-gray-600 dark:text-gray-300 mt-4">
@@ -149,67 +149,87 @@ const Home = () => {
                   </svg>
                 </a>
               </div>
+
+              {/* 特性展示 */}
+              <div className="grid grid-cols-1 gap-4 mt-8">
+                <div className="flex items-start space-x-3 p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg">
+                  <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">快速上传</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">支持拖拽、粘贴、点击多种上传方式</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg">
+                  <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">安全可靠</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">采用先进加密技术，确保图片安全存储</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg">
+                  <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">灵活分享</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">支持多种分享格式，一键复制使用</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* 右侧装饰区 */}
-            <div className="md:w-7/12 relative">
-              <div className="relative w-full aspect-square">
-                {/* 漂浮的图标和按键 */}
-                <div className="absolute inset-0">
-                  {/* 图片图标 */}
-                  <div className="absolute top-[10%] left-[20%] w-16 h-16 animate-float-delay">
-                    <div className="relative w-full h-full">
-                      <div className="absolute inset-0 bg-purple-500/20 rounded-2xl transform rotate-6"></div>
-                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex items-center justify-center">
-                        <svg className="w-8 h-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
-                        </svg>
-                      </div>
+            {/* 右侧3D照片魔方 */}
+            <div className="md:w-7/12 relative md:pt-16">
+              <div className="relative w-full aspect-square perspective-1000">
+                {/* 3D立方体容器 */}
+                <div className="preserve-3d w-[300px] h-[300px] relative mx-auto animate-rotate-cube cursor-pointer group hover:pause-animation">
+                  {/* 前面 */}
+                  <div className="cube-face front">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Front face" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-
-                  {/* 上传图标 */}
-                  <div className="absolute top-[30%] right-[25%] w-14 h-14 animate-float">
-                    <div className="relative w-full h-full">
-                      <div className="absolute inset-0 bg-blue-500/20 rounded-2xl transform -rotate-12"></div>
-                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex items-center justify-center">
-                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                      </div>
+                  {/* 后面 */}
+                  <div className="cube-face back">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Back face" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-
-                  {/* 分享图标 */}
-                  <div className="absolute bottom-[20%] left-[30%] w-12 h-12 animate-float-slow">
-                    <div className="relative w-full h-full">
-                      <div className="absolute inset-0 bg-green-500/20 rounded-xl transform rotate-12"></div>
-                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                        </svg>
-                      </div>
+                  {/* 右面 */}
+                  <div className="cube-face right">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Right face" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-
-                  {/* 链接图标 */}
-                  <div className="absolute bottom-[40%] right-[15%] w-10 h-10 animate-float-delay-slow">
-                    <div className="relative w-full h-full">
-                      <div className="absolute inset-0 bg-orange-500/20 rounded-lg transform -rotate-6"></div>
-                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                      </div>
+                  {/* 左面 */}
+                  <div className="cube-face left">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Left face" className="w-full h-full object-cover" loading="lazy" />
                     </div>
                   </div>
-
-                  {/* 装饰星星 */}
-                  <div className="absolute top-[15%] right-[10%] w-8 h-8 text-yellow-400 animate-pulse">
-                    ✦
+                  {/* 顶面 */}
+                  <div className="cube-face top">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Top face" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
                   </div>
-                  <div className="absolute bottom-[25%] left-[15%] w-6 h-6 text-purple-400 animate-pulse delay-300">
-                    ✦
+                  {/* 底面 */}
+                  <div className="cube-face bottom">
+                    <div className="cube-face-inner">
+                      <img src="https://www.loliapi.com/bg/" alt="Bottom face" className="w-full h-full object-cover" loading="lazy" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -218,38 +238,123 @@ const Home = () => {
         </div>
       </div>
 
-      {/* 添加必要的动画样式 */}
+      {/* 添加必要的动画和3D样式 */}
       <style jsx global>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+        @keyframes rotate-cube {
+          0% { transform: rotateX(15deg) rotateY(0deg); }
+          100% { transform: rotateX(375deg) rotateY(360deg); }
         }
-        @keyframes float-delay {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
+        .animate-rotate-cube {
+          animation: rotate-cube 20s linear infinite;
         }
-        @keyframes float-slow {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
+        .hover\\:pause-animation:hover {
+          animation-play-state: paused;
         }
-        @keyframes float-delay-slow {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
+        .perspective-1000 {
+          perspective: 1000px;
         }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
+        .preserve-3d {
+          transform-style: preserve-3d;
         }
-        .animate-float-delay {
-          animation: float-delay 4.5s ease-in-out infinite;
-          animation-delay: -2s;
+        .cube-face {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          backface-visibility: visible;
+          overflow: hidden;
+          transform-style: preserve-3d;
         }
-        .animate-float-slow {
-          animation: float-slow 5s ease-in-out infinite;
-          animation-delay: -1s;
+        .cube-face-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transform-style: preserve-3d;
+          /* 添加边框和光影效果 */
+          border: 2px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.2),
+            0 0 20px rgba(0, 0, 0, 0.15);
+          /* 添加渐变光效 */
+          background: linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.1) 0%,
+            rgba(255, 255, 255, 0.05) 50%,
+            rgba(0, 0, 0, 0.05) 100%
+          );
         }
-        .animate-float-delay-slow {
-          animation: float-delay-slow 5.5s ease-in-out infinite;
-          animation-delay: -3s;
+        /* 修复魔方缝隙问题并添加质感 */
+        .cube-face img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(1.01);
+          filter: brightness(0.95) contrast(1.1);
+          mix-blend-mode: overlay;
+        }
+        
+        /* 为每个面添加不同的光影效果 */
+        .front { 
+          transform: translateZ(150px);
+        }
+        .front .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.2),
+            0 0 20px rgba(0, 0, 0, 0.15),
+            0 0 40px rgba(255, 255, 255, 0.1);
+        }
+        .back { 
+          transform: translateZ(-150px) rotateY(180deg);
+        }
+        .back .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        .right { 
+          transform: translateX(150px) rotateY(90deg);
+        }
+        .right .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.25),
+            0 0 20px rgba(0, 0, 0, 0.15),
+            -5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .left { 
+          transform: translateX(-150px) rotateY(-90deg);
+        }
+        .left .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.25),
+            0 0 20px rgba(0, 0, 0, 0.15),
+            5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+        .top { 
+          transform: translateY(-150px) rotateX(90deg);
+        }
+        .top .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.2),
+            0 0 20px rgba(0, 0, 0, 0.1),
+            0 -5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .bottom { 
+          transform: translateY(150px) rotateX(-90deg);
+        }
+        .bottom .cube-face-inner {
+          box-shadow: 
+            inset 0 0 30px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(0, 0, 0, 0.2),
+            0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 添加悬停效果 */
+        .cube-face-inner:hover {
+          border-color: rgba(255, 255, 255, 0.3);
+          box-shadow: 
+            inset 0 0 50px rgba(0, 0, 0, 0.3),
+            0 0 30px rgba(0, 0, 0, 0.2),
+            0 0 20px rgba(255, 255, 255, 0.1);
+          transition: all 0.3s ease;
         }
       `}</style>
       

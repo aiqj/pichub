@@ -677,7 +677,7 @@ async function handleGetUserFiles(request, env) {
   }
   
   const files = await env.DB.prepare(
-    'SELECT id, user_id, file_name, original_name, file_size, file_type, strftime("%Y-%m-%d %H:%M:%S", datetime(uploaded_at, "+8 hours")) as uploaded_at FROM files WHERE user_id = ? ORDER BY uploaded_at DESC'
+    'SELECT id, user_id, file_name, original_name, file_size, file_type, is_public, strftime("%Y-%m-%d %H:%M:%S", datetime(uploaded_at, "+8 hours")) as uploaded_at FROM files WHERE user_id = ? ORDER BY uploaded_at DESC'
   ).bind(userId).all();
   
   // await logAction(env, user.id, user.username, 'GET_USER_FILES', `获取用户文件列表。用户ID: ${userId}`);
@@ -696,7 +696,7 @@ async function handleGetAllFiles(request, env) {
   }
   
   const files = await env.DB.prepare(
-    `SELECT files.id, files.user_id, files.file_name, files.original_name, files.file_size, files.file_type, 
+    `SELECT files.id, files.user_id, files.file_name, files.original_name, files.file_size, files.file_type, files.is_public, 
      strftime("%Y-%m-%d %H:%M:%S", datetime(files.uploaded_at, "+8 hours")) as uploaded_at, users.username
      FROM files
      JOIN users ON files.user_id = users.id
@@ -1033,6 +1033,98 @@ async function handleGetActiveUsersStats(request, env) {
 }
 
 /**
+ * 更新文件公开状态
+ */
+async function handleUpdateFilePublicStatus(request, env) {
+  const user = await authenticate(request, env);
+  
+  if (!user) {
+    return jsonResponse({ error: 'Unauthorized' }, 401, request, env);
+  }
+  
+  try {
+    const { fileId, isPublic } = await request.json();
+    
+    if (!fileId) {
+      return jsonResponse({ error: '文件ID是必填项' }, 400, request, env);
+    }
+    
+    if (isPublic === undefined) {
+      return jsonResponse({ error: 'isPublic参数是必填项' }, 400, request, env);
+    }
+    
+    // 查询文件信息
+    const file = await env.DB.prepare(
+      'SELECT * FROM files WHERE id = ?'
+    ).bind(fileId).first();
+    
+    if (!file) {
+      return jsonResponse({ error: '文件不存在' }, 404, request, env);
+    }
+    
+    // 验证权限：只能修改自己的文件，除非是管理员
+    if (file.user_id !== user.id && user.role !== 'admin') {
+      return jsonResponse({ error: '权限不足' }, 403, request, env);
+    }
+    
+    // 更新文件的公开状态
+    await env.DB.prepare(
+      'UPDATE files SET is_public = ? WHERE id = ?'
+    ).bind(isPublic ? 1 : 0, fileId).run();
+    
+    await logAction(env, user.id, user.username, 'UPDATE_FILE_PUBLIC_STATUS', `用户: ${user.username}, ${isPublic ? '公开' : '私有化'}了一个文件。`);
+    
+    return jsonResponse({ 
+      success: true,
+      message: `文件已成功${isPublic ? '公开' : '设为私有'}`
+    }, 200, request, env);
+  } catch (error) {
+    return jsonResponse({ error: '更新文件状态失败', message: error.message }, 500, request, env);
+  }
+}
+
+/**
+ * 获取公开的文件列表
+ */
+async function handleGetPublicFiles(request, env) {
+  try {
+    const url = new URL(request.url);
+    
+    // 分页参数
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    
+    // 查询公开文件
+    const files = await env.DB.prepare(
+      `SELECT files.id, files.file_name, files.original_name, files.file_size, files.file_type, 
+       strftime("%Y-%m-%d %H:%M:%S", datetime(files.uploaded_at, "+8 hours")) as uploaded_at, users.username
+       FROM files
+       JOIN users ON files.user_id = users.id
+       WHERE files.is_public = 1
+       ORDER BY files.uploaded_at DESC
+       LIMIT ? OFFSET ?`
+    ).bind(limit, offset).all();
+    
+    // 查询总数
+    const totalResult = await env.DB.prepare(
+      'SELECT COUNT(*) as count FROM files WHERE is_public = 1'
+    ).first();
+    
+    return jsonResponse({ 
+      files: files.results,
+      pagination: {
+        total: totalResult ? totalResult.count : 0,
+        limit,
+        offset,
+        hasMore: offset + files.results.length < (totalResult ? totalResult.count : 0)
+      }
+    }, 200, request, env);
+  } catch (error) {
+    return jsonResponse({ error: '获取公开文件列表失败', message: error.message }, 500, request, env);
+  }
+}
+
+/**
  * 主要请求处理函数
  */
 export default {
@@ -1071,7 +1163,11 @@ export default {
           files: {
             upload: '/api/upload',
             list: '/api/files',
-            delete: '/api/files'
+            delete: '/api/files',
+            updateStatus: '/api/files/status'
+          },
+          public: {
+            files: '/api/public/files'
           }
         }
       }, 200, request, env);
@@ -1249,6 +1345,16 @@ export default {
       
       if (path === '/api/admin/users/stats' && request.method === 'GET') {
         return handleGetActiveUsersStats(request, env);
+      }
+      
+      // 文件状态更新API
+      if (path === '/api/files/status' && request.method === 'PUT') {
+        return handleUpdateFilePublicStatus(request, env);
+      }
+      
+      // 公开文件列表API - 不需要认证
+      if (path === '/api/public/files' && request.method === 'GET') {
+        return handleGetPublicFiles(request, env);
       }
     }
     

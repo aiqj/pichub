@@ -115,46 +115,101 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* 顶部横幅 - 100%宽度的紫色背景 */}
-      <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 pb-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 text-white space-y-8 mb-10 md:mb-0">
-              <div>
-                <h1 className="text-4xl md:text-5xl font-bold">
-                  简单、高效的图片托管服务
-                </h1>
-                <p className="text-lg mt-4 text-white/90">
-                  安全托管您的图片，轻松分享到任何地方。支持多种格式，高速加载，永久存储。
-                </p>
+      {/* 顶部横幅 - 简约现代风格 */}
+      <div className="relative w-full bg-[#fafafa] dark:bg-gray-900 min-h-[85vh] overflow-hidden">
+        {/* 背景网格 */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] dark:bg-[linear-gradient(to_right,#333_1px,transparent_1px),linear-gradient(to_bottom,#333_1px,transparent_1px)]" />
+        </div>
+
+        <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-16">
+            {/* 左侧内容区 */}
+            <div className="md:w-5/12 space-y-8">
+              <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white tracking-tight leading-tight">
+                PicHub
+                <span className="block text-4xl md:text-5xl text-gray-600 dark:text-gray-300 mt-4">
+                  2024
+                </span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-lg">
+                简单、高效的图片托管服务，让分享更轻松。
+              </p>
+
+              <div className="flex items-center gap-4">
+                <button className="group relative px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:-translate-y-0.5 transition-transform">
+                  立即注册
+                  <div className="absolute inset-0 bg-gray-900 dark:bg-white rounded-lg translate-y-1.5 -z-10"></div>
+                </button>
+                <a href="#features" className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  了解更多
+                  <svg className="w-5 h-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
               </div>
             </div>
-            <div className="md:w-5/12">
-              <div className="relative">
-                <div className="absolute inset-0 backdrop-blur-sm rounded-xl border-4 border-white/20 shadow-2xl scale-[0.98] translate-x-2 translate-y-2 z-0"></div>
-                <div className="relative rounded-xl overflow-hidden border-4 border-white/30 shadow-2xl z-10">
-                  <div className="grid grid-cols-4 grid-rows-3 gap-2 p-3 bg-white/5 backdrop-blur-sm">
-                    <div className="col-span-3 row-span-3 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1501854140801-50d01698950b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                        alt="风景"
-                        className="w-full h-full object-cover"
-                      />
+
+            {/* 右侧装饰区 */}
+            <div className="md:w-7/12 relative">
+              <div className="relative w-full aspect-square">
+                {/* 漂浮的图标和按键 */}
+                <div className="absolute inset-0">
+                  {/* 图片图标 */}
+                  <div className="absolute top-[10%] left-[20%] w-16 h-16 animate-float-delay">
+                    <div className="relative w-full h-full">
+                      <div className="absolute inset-0 bg-purple-500/20 rounded-2xl transform rotate-6"></div>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex items-center justify-center">
+                        <svg className="w-8 h-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                        </svg>
+                      </div>
                     </div>
-                    <div className="col-span-1 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                        alt="花卉"
-                        className="w-full h-full object-cover"
-                      />
+                  </div>
+
+                  {/* 上传图标 */}
+                  <div className="absolute top-[30%] right-[25%] w-14 h-14 animate-float">
+                    <div className="relative w-full h-full">
+                      <div className="absolute inset-0 bg-blue-500/20 rounded-2xl transform -rotate-12"></div>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex items-center justify-center">
+                        <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                      </div>
                     </div>
-                    <div className="col-span-1 row-span-2 rounded-lg overflow-hidden">
-                      <img 
-                        src="https://images.unsplash.com/photo-1516616370751-86d6bd8b0651?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
-                        alt="建筑"
-                        className="w-full h-full object-cover"
-                      />
+                  </div>
+
+                  {/* 分享图标 */}
+                  <div className="absolute bottom-[20%] left-[30%] w-12 h-12 animate-float-slow">
+                    <div className="relative w-full h-full">
+                      <div className="absolute inset-0 bg-green-500/20 rounded-xl transform rotate-12"></div>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                        </svg>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* 链接图标 */}
+                  <div className="absolute bottom-[40%] right-[15%] w-10 h-10 animate-float-delay-slow">
+                    <div className="relative w-full h-full">
+                      <div className="absolute inset-0 bg-orange-500/20 rounded-lg transform -rotate-6"></div>
+                      <div className="absolute inset-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 装饰星星 */}
+                  <div className="absolute top-[15%] right-[10%] w-8 h-8 text-yellow-400 animate-pulse">
+                    ✦
+                  </div>
+                  <div className="absolute bottom-[25%] left-[15%] w-6 h-6 text-purple-400 animate-pulse delay-300">
+                    ✦
                   </div>
                 </div>
               </div>
@@ -162,6 +217,41 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      {/* 添加必要的动画样式 */}
+      <style jsx global>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes float-delay {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes float-slow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes float-delay-slow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-5px); }
+        }
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
+        }
+        .animate-float-delay {
+          animation: float-delay 4.5s ease-in-out infinite;
+          animation-delay: -2s;
+        }
+        .animate-float-slow {
+          animation: float-slow 5s ease-in-out infinite;
+          animation-delay: -1s;
+        }
+        .animate-float-delay-slow {
+          animation: float-delay-slow 5.5s ease-in-out infinite;
+          animation-delay: -3s;
+        }
+      `}</style>
       
       {/* 为什么选择 PicHub */}
       <div className="py-20">

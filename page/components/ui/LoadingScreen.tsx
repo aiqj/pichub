@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface LoadingScreenProps {
   isVisible: boolean;
 }
 
 const LoadingScreen: React.FC<LoadingScreenProps> = ({ isVisible }) => {
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
+  
   // 使用内部状态来控制显示，以获得更平滑的过渡效果
   const [opacity, setOpacity] = useState(isVisible ? 1 : 0);
   const [display, setDisplay] = useState(isVisible ? 'flex' : 'none');
@@ -20,8 +24,8 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ isVisible }) => {
     } else {
       // 先淡出
       setOpacity(0);
-      // 完全淡出后再隐藏
-      timer = setTimeout(() => setDisplay('none'), 300);
+      // 完全淡出后再隐藏 - 从300ms减少到150ms
+      timer = setTimeout(() => setDisplay('none'), 150);
     }
     
     return () => {
@@ -34,17 +38,17 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ isVisible }) => {
 
   return (
     <div 
-      className="fixed inset-0 bg-[#121826] z-50 flex flex-col items-center justify-center"
+      className={`fixed inset-0 ${isDarkMode ? 'bg-[#121826]' : 'bg-gray-50'} z-50 flex flex-col items-center justify-center`}
       style={{ 
         opacity: opacity,
         display: display,
-        transition: 'opacity 300ms ease-in-out',
+        transition: 'opacity 150ms ease-in-out', // 从300ms减少到150ms
       }}
     >
       <div className="loading-logo text-purple-500 text-4xl font-bold mb-4">
         PicHub
       </div>
-      <div className="text-gray-400 text-sm">
+      <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
         简单、安全、高效的图片托管服务
       </div>
       

@@ -317,7 +317,8 @@ const Home = () => {
                     try {
                       const userData = JSON.parse(savedUser);
                       login(savedToken, userData);
-                      window.location.reload(); // 强制刷新页面
+                      // 使用router.push代替窗口刷新，避免闪屏
+                      router.push('/'); 
                     } catch (e) {
                       setErrorMsg('无法恢复会话，请重新登录');
                     }

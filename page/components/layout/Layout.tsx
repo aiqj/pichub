@@ -32,8 +32,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   const handleLogout = () => {
-    logout();
-    router.push('/login');
+    // 先导航再登出，避免闪屏
+    // 使用路由导航替代window.location，保持SPA体验
+    router.push('/login').then(() => {
+      // 路由完成后再清除状态
+      logout();
+    });
   };
 
   const isAdminRoute = router.pathname.startsWith('/admin');

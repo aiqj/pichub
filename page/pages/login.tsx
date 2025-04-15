@@ -111,10 +111,10 @@ export default function Login() {
       
       showNotification('验证成功，正在进入系统...', 'success');
       
-      // 登录成功，跳转到主页
+      // 登录成功，跳转到主页，减少延迟时间
       setTimeout(() => {
         router.push('/');
-      }, 1000);
+      }, 100); // 从1000ms减少到100ms
     } catch (error: any) {
       // 处理不同类型的错误
       if (error.response) {

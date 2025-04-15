@@ -122,13 +122,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // 登出函数
   const logout = () => {
+    // 先清除本地存储和状态
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);
     
-    // 重定向到登录页
-    router.push('/login');
+    // 不在此处进行路由导航，交给调用此函数的组件处理路由
   };
 
   // 更新用户数据

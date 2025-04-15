@@ -34,10 +34,16 @@ type CustomAppProps = AppProps & {
 
 // 主应用容器组件，用于处理路由切换和加载状态
 const AppContainer = ({ Component, pageProps, router }: CustomAppProps) => {
-  const { isInitialLoading, isRouteChanging, startLoading, stopLoading } = useLoading();
+  const { 
+    isInitialLoading, 
+    isRouteChanging, 
+    startLoading, 
+    stopLoading,
+    showLoadingOnRouteChange
+  } = useLoading();
   
-  // 是否显示加载界面
-  const showLoading = isInitialLoading || isRouteChanging;
+  // 是否显示加载界面 - 只在初始加载或路由改变且设置了显示时才显示
+  const showLoading = isInitialLoading || (isRouteChanging && showLoadingOnRouteChange);
   
   // 使用路由路径作为key，确保组件不会复用
   const pageKey = router.pathname;
@@ -51,7 +57,7 @@ const AppContainer = ({ Component, pageProps, router }: CustomAppProps) => {
       // 如果加载完成但内容还未显示，则显示内容
       const timer = setTimeout(() => {
         setContentVisible(true);
-      }, 300);
+      }, 100); // 从300ms减少到100ms，更快显示内容
       return () => clearTimeout(timer);
     } else if (showLoading && contentVisible) {
       // 如果开始加载但内容还在显示，则隐藏内容
@@ -61,15 +67,25 @@ const AppContainer = ({ Component, pageProps, router }: CustomAppProps) => {
   
   // 路由切换监听
   useEffect(() => {
-    const handleStart = () => {
+    const handleStart = (url: string) => {
+      // 检查是否是登录/登出相关路由
+      const isAuthRoute = url === '/login' || url === '/register';
+      const fromAuthRoute = router.pathname === '/login' || router.pathname === '/register';
+      
+      // 如果是登录/登出相关导航，不显示加载屏幕
+      if (isAuthRoute || fromAuthRoute) {
+        // 登录/登出导航不显示加载
+        return;
+      }
+      
       startLoading();
     };
     
     const handleComplete = () => {
-      // 延迟结束加载状态，确保新页面已渲染
+      // 减少延迟时间
       setTimeout(() => {
         stopLoading();
-      }, 500);
+      }, 200); // 从500ms减少到200ms
     };
 
     router.events.on('routeChangeStart', handleStart);

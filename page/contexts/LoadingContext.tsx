@@ -6,6 +6,8 @@ interface LoadingContextType {
   loadingKey: number; // 用于强制重新渲染
   startLoading: () => void;
   stopLoading: () => void;
+  showLoadingOnRouteChange: boolean;
+  setShowLoadingOnRouteChange: (show: boolean) => void;
 }
 
 // 创建初始值
@@ -14,7 +16,9 @@ const LoadingContext = createContext<LoadingContextType>({
   isRouteChanging: false,
   loadingKey: 0,
   startLoading: () => {},
-  stopLoading: () => {}
+  stopLoading: () => {},
+  showLoadingOnRouteChange: false, // 默认不在路由切换时显示加载
+  setShowLoadingOnRouteChange: () => {}
 });
 
 // 自定义Hook，便于使用上下文
@@ -31,15 +35,17 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   const [isRouteChanging, setIsRouteChanging] = useState(false);
   // 强制重新渲染的key
   const [loadingKey, setLoadingKey] = useState(0);
+  // 是否在路由切换时显示加载画面
+  const [showLoadingOnRouteChange, setShowLoadingOnRouteChange] = useState(false);
   
   // 初始加载逻辑
   useEffect(() => {
     // 确保只在客户端执行
     if (typeof window !== 'undefined') {
-      // 设置足够长的时间来确保一切都已加载
+      // 大幅减少初始加载时间
       const timer = setTimeout(() => {
         setIsInitialLoading(false);
-      }, 1500);
+      }, 300); // 从500ms减少到300ms
       
       return () => clearTimeout(timer);
     }
@@ -47,7 +53,9 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
   
   // 启动加载状态
   const startLoading = () => {
-    setIsRouteChanging(true);
+    if (showLoadingOnRouteChange) {
+      setIsRouteChanging(true);
+    }
   };
   
   // 停止加载状态
@@ -64,7 +72,9 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({ children }) =>
         isRouteChanging,
         loadingKey,
         startLoading,
-        stopLoading
+        stopLoading,
+        showLoadingOnRouteChange,
+        setShowLoadingOnRouteChange
       }}
     >
       {children}

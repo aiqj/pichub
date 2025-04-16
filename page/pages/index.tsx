@@ -210,9 +210,9 @@ const Home = () => {
             {/* 右侧内容区 */}            
             <div className="md:w-7/12 relative top-[3.5rem]">
               {/* 模拟无框窗口 */}
-              <div className="bg-black dark:bg-white rounded-xl shadow-xl overflow-hidden max-w-md mx-auto border border-gray-800 dark:border-gray-200 theme-transition">
+              <div className="bg-black dark:bg-white rounded-xl shadow-xl overflow-hidden max-w-md mx-auto border border-gray-950 dark:border-gray-400 theme-transition">
                 {/* 窗口标题栏 */}
-                <div className="bg-black dark:bg-gray-100 px-3 py-1.5 border-b border-gray-800 dark:border-gray-200 flex items-center theme-transition">
+                <div className="bg-black dark:bg-gray-100 px-3 py-1.5 border-b border-gray-950 dark:border-gray-400 flex items-center theme-transition">
                   <div className="flex space-x-1.5">
                     <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                     <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
@@ -224,26 +224,26 @@ const Home = () => {
                 <div className="relative">
                   {/* 单张图片全屏展示 */}
                   <img 
-                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba" 
+                    src="https://pichub.8008893.workers.dev/images/d96edca3-5083.png"
                     alt="Cat portrait" 
                     className="w-full h-72 object-cover"
                   />
                   
                   {/* 悬浮分享按钮 */}
-                  <div className="absolute bottom-4 right-4 flex items-center space-x-2 opacity-0 hover:opacity-100 transition-opacity duration-300 group">
+                  <div className="absolute bottom-4 right-4 flex items-center space-x-2 transition-opacity duration-300 group">
                     <div className="bg-black/70 dark:bg-white/70 backdrop-blur-sm rounded-full p-2 flex items-center space-x-2 theme-transition">
                       <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
                         <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </button>
-                      
+                    
                       <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
                         <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
                       </button>
-                      
+                    
                       <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
                         <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -262,7 +262,15 @@ const Home = () => {
         </div>
 
         {/* 向下滚动提示 */}
-        <div className="absolute bottom-8 left-0 right-0 mx-auto w-max flex flex-col items-center text-gray-600 dark:text-gray-400 animate-bounce">
+        <div 
+          className="absolute bottom-8 left-0 right-0 mx-auto w-max flex flex-col items-center text-gray-600 dark:text-gray-400 animate-bounce cursor-pointer"
+          onClick={() => {
+            const gallerySection = document.getElementById('gallery');
+            if (gallerySection) {
+              gallerySection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
           <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-md mb-2">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -273,7 +281,7 @@ const Home = () => {
       </div>
       
       {/* 图片展示 */}
-      <div className="w-full bg-gray-50 dark:bg-gray-900">
+      <div id="gallery" className="w-full bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <h2 className="text-3xl font-bold text-center mb-4 text-gray-800 dark:text-gray-200">
             拾光计划：发现每一刻的精彩

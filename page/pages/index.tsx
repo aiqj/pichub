@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Button from '../components/ui/Button';
@@ -38,6 +38,40 @@ const Home = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewName, setPreviewName] = useState('');
   const apiEndpoint = process.env.NEXT_PUBLIC_API_HOST || '';
+
+  // 生成固定的图片纵横比映射，确保每次渲染使用相同的值
+  const aspectRatioMap = useMemo(() => {
+    return new Map();
+  }, []);
+
+  // 获取图片真实纵横比的函数
+  const getImageAspectRatio = (url, fileId) => {
+    if (aspectRatioMap.has(fileId)) {
+      return aspectRatioMap.get(fileId);
+    }
+    
+    // 默认纵横比，在图片加载前使用
+    let defaultRatio = 'auto';
+    
+    // 确保代码只在客户端执行
+    if (typeof window !== 'undefined') {
+      // 创建一个图片对象来获取实际尺寸
+      const img = new window.Image();
+      img.src = url;
+      
+      img.onload = () => {
+        // 计算真实的纵横比
+        const realRatio = `${img.width}/${img.height}`;
+        aspectRatioMap.set(fileId, realRatio);
+        
+        // 强制重新渲染以应用新的纵横比
+        // 注意：在实际应用中这可能导致性能问题，理想情况下应该使用更精细的状态更新方式
+        setFiles(prevFiles => [...prevFiles]);
+      };
+    }
+    
+    return defaultRatio;
+  };
 
   // 格式化文件大小
   const formatFileSize = (bytes: number): string => {
@@ -202,7 +236,7 @@ const Home = () => {
                     
                     {/* 顶层照片 */}
                     <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-indigo-100 dark:bg-indigo-900/30 rounded-md shadow-lg rotate-[4deg] transition-all duration-300 hover:rotate-[8deg] hover:scale-105">
-                      <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1615220368123-9be743f0cfa9')" }}></div>
+                      <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://cdn.pixabay.com/photo/2025/03/25/20/34/cat-9493147_1280.jpg')" }}></div>
                     </div>
                   </div>
                   
@@ -244,74 +278,43 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* 为什么选择 PicHub */}
-      <div className="py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-16">
-            为什么选择 <span className="text-purple-600">PicHub</span>
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white shadow-md rounded-xl p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-purple-100 rounded-full">
-                <svg className="w-10 h-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">快速上传</h3>
-              <p className="text-gray-600">上传速度快，无需等待，支持拖拽、粘贴、点击多种上传方式。</p>
-            </div>
-            
-            <div className="bg-white shadow-md rounded-xl p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-blue-100 rounded-full">
-                <svg className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">安全可靠</h3>
-              <p className="text-gray-600">采用先进的加密和存储技术，确保您的图片安全存储，不会丢失。</p>
-            </div>
-            
-            <div className="bg-white shadow-md rounded-xl p-8 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-indigo-100 rounded-full">
-                <svg className="w-10 h-10 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">灵活分享</h3>
-              <p className="text-gray-600">多种分享方式，支持直接链接、HTML和Markdown格式，适用于各种场景。</p>
-            </div>
+
+        {/* 向下滚动提示 */}
+        <div className="absolute bottom-8 left-0 right-0 mx-auto w-max flex flex-col items-center text-gray-600 dark:text-gray-400 animate-bounce">
+          <div className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-md mb-2">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
           </div>
+          <span className="text-sm font-medium">向下滚动，发现美好</span>
         </div>
       </div>
       
-      {/* 最新公开图片 */}
-      <div className="w-full bg-gray-50">
+      {/* 图片展示 */}
+      <div className="w-full bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-3xl font-bold text-center mb-4 text-gray-800">
-            最新公开图片
+          <h2 className="text-3xl font-bold text-center mb-4 text-gray-800 dark:text-gray-200">
+            拾光计划：发现每一刻的精彩
           </h2>
-          <p className="text-center text-gray-600 mb-12">
+          <p className="text-center text-gray-600 dark:text-gray-400 mb-12">
             探索用户分享的精彩图片，获取灵感，发现美好
           </p>
           
           {loading && files.length === 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
               {Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="bg-white rounded-xl overflow-hidden shadow-md animate-pulse">
-                  <div className="aspect-video bg-gray-200"></div>
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md animate-pulse break-inside-avoid mb-6">
+                  <div className={`aspect-${index % 2 === 0 ? 'video' : 'square'} bg-gray-200 dark:bg-gray-700`}></div>
                   <div className="p-4 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : error ? (
-            <div className="text-center p-8 bg-red-50 border border-red-100 rounded-xl">
-              <p className="text-red-600">{error}</p>
+            <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl">
+              <p className="text-red-600 dark:text-red-400">{error}</p>
               <Button 
                 variant="primary" 
                 className="mt-4"
@@ -322,48 +325,56 @@ const Home = () => {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {/* 图片瀑布流 */}
+              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance] space-y-0">
                 {files.map((file) => {
                   const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
+                  
+                  // 使用真实图片的纵横比
+                  const aspectRatio = getImageAspectRatio(imageUrl, file.id);
+                  
                   return (
                     <div 
                       key={file.id} 
-                      className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer group"
+                      className="mb-3 overflow-hidden rounded-md group break-inside-avoid cursor-pointer relative inline-block w-full"
                       onClick={() => openPreview(file)}
                     >
-                      <div className="aspect-video bg-gray-100 overflow-hidden relative">
-                        <img 
-                          src={imageUrl} 
-                          alt={file.original_name}
-                          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute top-2 right-2">
-                          <FileTypeIcon type={file.file_type} />
+                      <img 
+                        src={imageUrl} 
+                        alt={file.original_name}
+                        className="w-full object-cover transition-all duration-300 hover:brightness-105"
+                        style={{ aspectRatio }}
+                        loading="lazy"
+                        onLoad={(e) => {
+                          // 图片加载完成后，设置正确的宽高比
+                          const img = e.target as HTMLImageElement;
+                          if (img.naturalWidth && img.naturalHeight) {
+                            img.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`;
+                          }
+                        }}
+                      />
+                      
+                      {/* Hover overlay with subtle info */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                        <div className="flex items-center justify-between text-white text-opacity-90 text-xs">
+                          <div className="flex items-center space-x-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span className="truncate max-w-[100px]">{file.username}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <FileTypeIcon type={file.file_type} />
+                          </div>
                         </div>
                       </div>
-                      <div className="p-4">
-                        <h3 className="font-medium text-gray-800 truncate" title={file.original_name}>
-                          {file.original_name}
-                        </h3>
-                        <div className="flex justify-between mt-2 text-xs text-gray-500">
-                          <span>{formatFileSize(file.file_size)}</span>
-                          <span 
-                            className="group relative cursor-help"
-                            title={file.uploaded_at}
-                          >
-                            {formatUploadTime(file.uploaded_at)}
-                            <span className="absolute bottom-full right-0 mb-2 w-44 rounded bg-black/80 p-1 text-center text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-                              {new Date(file.uploaded_at).toLocaleString('zh-CN')}
-                            </span>
-                          </span>
+                      
+                      {/* NSFW tag if needed */}
+                      {file.tags && file.tags.includes('nsfw') && (
+                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
+                          NSFW
                         </div>
-                        <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          <span>{file.username}</span>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   );
                 })}
@@ -383,11 +394,11 @@ const Home = () => {
               )}
               
               {files.length === 0 && !loading && (
-                <div className="text-center p-12 bg-white border border-gray-200 rounded-xl">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="text-center p-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-gray-600 text-lg">还没有公开的图片</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-lg">还没有公开的图片</p>
                   <Button 
                     variant="primary" 
                     className="mt-4"
@@ -399,36 +410,6 @@ const Home = () => {
               )}
             </>
           )}
-        </div>
-      </div>
-      
-      {/* 底部行动号召 */}
-      <div className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">准备好开始使用了吗？</h2>
-          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            现在就开始上传您的图片，获取更好的托管体验，安全、高效、便捷。
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button 
-              variant="secondary" 
-              size="lg"
-              onClick={() => router.push('/upload')}
-              className="bg-white text-indigo-600 hover:bg-gray-100"
-            >
-              立即上传
-            </Button>
-            {!isAuthenticated && (
-              <Button 
-                variant="primary" 
-                size="lg"
-                onClick={() => router.push('/register')}
-                className="bg-transparent border-2 border-white hover:bg-white/10"
-              >
-                注册账号
-              </Button>
-            )}
-          </div>
         </div>
       </div>
       

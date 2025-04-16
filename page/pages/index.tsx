@@ -174,65 +174,65 @@ const Home = () => {
               </div>
             </div>
             {/* 右侧内容区 */}            
-            <div className="md:w-7/12 relative">
+            <div className="md:w-7/12 relative top-[3.5rem]">
               {/* 模拟macOS窗口 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-lg mx-auto border border-gray-200 dark:border-gray-700 theme-transition">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-md mx-auto border border-gray-200 dark:border-gray-700 theme-transition">
                 {/* 窗口标题栏 */}
-                <div className="bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center">
-                  <div className="flex space-x-2">
-                    <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                    <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                <div className="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex items-center">
+                  <div className="flex space-x-1.5">
+                    <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
+                    <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
+                    <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
                   </div>
                 </div>
                 
                 {/* 窗口内容区 */}
-                <div className="p-6">
+                <div className="p-5">
                   {/* 照片展示 */}
-                  <div className="relative h-64 mx-auto mb-10">
+                  <div className="relative h-48 mx-auto mb-8">
                     {/* 底层照片 */}
-                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-60 h-44 bg-blue-100 dark:bg-blue-900/30 rounded-md shadow-lg rotate-[-8deg] transition-all duration-300 hover:rotate-[-10deg] hover:scale-105">
+                    <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-blue-100 dark:bg-blue-900/30 rounded-md shadow-lg rotate-[-8deg] transition-all duration-300 hover:rotate-[-10deg] hover:scale-105">
                       <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1579353977828-2a4eab540b9a')" }}></div>
                     </div>
                     
                     {/* 中层照片 */}
-                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-60 h-44 bg-purple-100 dark:bg-purple-900/30 rounded-md shadow-lg rotate-[-2deg] transition-all duration-300 hover:rotate-[0deg] hover:scale-105">
+                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-purple-100 dark:bg-purple-900/30 rounded-md shadow-lg rotate-[-2deg] transition-all duration-300 hover:rotate-[0deg] hover:scale-105">
                       <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131')" }}></div>
                     </div>
                     
                     {/* 顶层照片 */}
-                    <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-60 h-44 bg-indigo-100 dark:bg-indigo-900/30 rounded-md shadow-lg rotate-[4deg] transition-all duration-300 hover:rotate-[8deg] hover:scale-105">
+                    <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-indigo-100 dark:bg-indigo-900/30 rounded-md shadow-lg rotate-[4deg] transition-all duration-300 hover:rotate-[8deg] hover:scale-105">
                       <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1615220368123-9be743f0cfa9')" }}></div>
                     </div>
                   </div>
                   
                   {/* 简单分享图标展示 */}
-                  <div className="flex justify-center space-x-8">
+                  <div className="flex justify-center space-x-6">
                     <div className="flex flex-col items-center">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-7 h-7 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
+                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
-                      <span className="mt-2 text-xs text-gray-600 dark:text-gray-400">URL</span>
+                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">URL</span>
                     </div>
                     
                     <div className="flex flex-col items-center">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-7 h-7 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
+                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
                       </div>
-                      <span className="mt-2 text-xs text-gray-600 dark:text-gray-400">HTML</span>
+                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">HTML</span>
                     </div>
                     
                     <div className="flex flex-col items-center">
-                      <div className="w-14 h-14 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-7 h-7 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
+                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                         </svg>
                       </div>
-                      <span className="mt-2 text-xs text-gray-600 dark:text-gray-400">Markdown</span>
+                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">Markdown</span>
                     </div>
                   </div>
                 </div>

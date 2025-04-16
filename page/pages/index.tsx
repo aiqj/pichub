@@ -209,10 +209,10 @@ const Home = () => {
             </div>
             {/* 右侧内容区 */}            
             <div className="md:w-7/12 relative top-[3.5rem]">
-              {/* 模拟macOS窗口 */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden max-w-md mx-auto border border-gray-200 dark:border-gray-700 theme-transition">
+              {/* 模拟无框窗口 */}
+              <div className="bg-black dark:bg-white rounded-xl shadow-xl overflow-hidden max-w-md mx-auto border border-gray-800 dark:border-gray-200 theme-transition">
                 {/* 窗口标题栏 */}
-                <div className="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 flex items-center">
+                <div className="bg-black dark:bg-gray-100 px-3 py-1.5 border-b border-gray-800 dark:border-gray-200 flex items-center theme-transition">
                   <div className="flex space-x-1.5">
                     <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>
                     <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>
@@ -220,53 +220,35 @@ const Home = () => {
                   </div>
                 </div>
                 
-                {/* 窗口内容区 */}
-                <div className="p-5">
-                  {/* 照片展示 */}
-                  <div className="relative h-48 mx-auto mb-8">
-                    {/* 底层照片 */}
-                    <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-blue-100 dark:bg-blue-900/30 rounded-md shadow-lg rotate-[-8deg] transition-all duration-300 hover:rotate-[-10deg] hover:scale-105">
-                      <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1579353977828-2a4eab540b9a')" }}></div>
-                    </div>
-                    
-                    {/* 中层照片 */}
-                    <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-purple-100 dark:bg-purple-900/30 rounded-md shadow-lg rotate-[-2deg] transition-all duration-300 hover:rotate-[0deg] hover:scale-105">
-                      <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131')" }}></div>
-                    </div>
-                    
-                    {/* 顶层照片 */}
-                    <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-48 h-36 bg-indigo-100 dark:bg-indigo-900/30 rounded-md shadow-lg rotate-[4deg] transition-all duration-300 hover:rotate-[8deg] hover:scale-105">
-                      <div className="w-full h-full bg-cover bg-center rounded-md" style={{ backgroundImage: "url('https://cdn.pixabay.com/photo/2025/03/25/20/34/cat-9493147_1280.jpg')" }}></div>
-                    </div>
-                  </div>
+                {/* 窗口内容区 - 极简设计 */}
+                <div className="relative">
+                  {/* 单张图片全屏展示 */}
+                  <img 
+                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba" 
+                    alt="Cat portrait" 
+                    className="w-full h-72 object-cover"
+                  />
                   
-                  {/* 简单分享图标展示 */}
-                  <div className="flex justify-center space-x-6">
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {/* 悬浮分享按钮 */}
+                  <div className="absolute bottom-4 right-4 flex items-center space-x-2 opacity-0 hover:opacity-100 transition-opacity duration-300 group">
+                    <div className="bg-black/70 dark:bg-white/70 backdrop-blur-sm rounded-full p-2 flex items-center space-x-2 theme-transition">
+                      <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
+                        <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
-                      </div>
-                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">URL</span>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      </button>
+                      
+                      <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
+                        <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
-                      </div>
-                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">HTML</span>
-                    </div>
-                    
-                    <div className="flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-white dark:bg-gray-800 shadow-md">
-                        <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      </button>
+                      
+                      <button className="w-8 h-8 rounded-full bg-white/10 dark:bg-gray-100/80 flex items-center justify-center hover:bg-white/20 dark:hover:bg-gray-200/80 transition-colors">
+                        <svg className="w-4 h-4 text-white dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                         </svg>
-                      </div>
-                      <span className="mt-1.5 text-xs text-gray-600 dark:text-gray-400">Markdown</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -329,18 +311,18 @@ const Home = () => {
               <div className="relative"> {/* 添加底部内边距为遮罩层留出空间 */}
                 {/* 图片瀑布流 */}
                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance] space-y-0">
-                  {files.map((file) => {
-                    const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
+                {files.map((file) => {
+                  const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
                     
                     // 使用真实图片的纵横比
                     const aspectRatio = getImageAspectRatio(imageUrl, file.id);
                     
-                    return (
-                      <div 
-                        key={file.id} 
+                  return (
+                    <div 
+                      key={file.id} 
                         className="mb-3 overflow-hidden rounded-md group break-inside-avoid cursor-pointer relative inline-block w-full"
-                        onClick={() => openPreview(file)}
-                      >
+                      onClick={() => openPreview(file)}
+                    >
                         <img 
                           src={imageUrl} 
                           alt={file.original_name}
@@ -457,8 +439,8 @@ const Home = () => {
                           <div className="flex items-center justify-between text-white text-opacity-90 text-xs">
                             <div className="flex items-center space-x-1">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
                               <span className="truncate max-w-[100px]">{file.username}</span>
                             </div>
                             <div className="flex items-center">
@@ -471,24 +453,24 @@ const Home = () => {
                         {file.tags && file.tags.includes('nsfw') && (
                           <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
                             NSFW
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
-                
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
+              
                 {/* 底部渐变遮罩层 - 只在有更多数据时显示 */}
                 {pagination.hasMore && (
                   <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-50/95 via-gray-50/70 to-transparent dark:from-gray-900/95 dark:via-gray-900/70 pointer-events-none"></div>
                 )}
                 
                 {/* 加载更多按钮 - 放置在渐变遮罩层上 */}
-                {pagination.hasMore && (
+              {pagination.hasMore && (
                   <div className="absolute bottom-10 left-0 right-0 text-center z-10">
                     <button
-                      onClick={loadMore}
-                      disabled={loading}
+                    onClick={loadMore}
+                    disabled={loading}
                       className="inline-flex items-center justify-center px-8 py-2.5 text-sm font-medium text-gray-600 bg-white/80 dark:bg-gray-800/80 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 rounded-full shadow-md border border-gray-200 dark:border-gray-700 transition-colors focus:outline-none backdrop-blur-sm"
                     >
                       {loading ? (
@@ -503,8 +485,8 @@ const Home = () => {
                         <span>加载更多</span>
                       )}
                     </button>
-                  </div>
-                )}
+                </div>
+              )}
               </div>
               
               {files.length === 0 && !loading && (

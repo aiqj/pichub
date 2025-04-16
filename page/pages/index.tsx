@@ -325,73 +325,187 @@ const Home = () => {
             </div>
           ) : (
             <>
-              {/* 图片瀑布流 */}
-              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance] space-y-0">
-                {files.map((file) => {
-                  const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
-                  
-                  // 使用真实图片的纵横比
-                  const aspectRatio = getImageAspectRatio(imageUrl, file.id);
-                  
-                  return (
-                    <div 
-                      key={file.id} 
-                      className="mb-3 overflow-hidden rounded-md group break-inside-avoid cursor-pointer relative inline-block w-full"
-                      onClick={() => openPreview(file)}
-                    >
-                      <img 
-                        src={imageUrl} 
-                        alt={file.original_name}
-                        className="w-full object-cover transition-all duration-300 hover:brightness-105"
-                        style={{ aspectRatio }}
-                        loading="lazy"
-                        onLoad={(e) => {
-                          // 图片加载完成后，设置正确的宽高比
-                          const img = e.target as HTMLImageElement;
-                          if (img.naturalWidth && img.naturalHeight) {
-                            img.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`;
-                          }
-                        }}
-                      />
-                      
-                      {/* Hover overlay with subtle info */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                        <div className="flex items-center justify-between text-white text-opacity-90 text-xs">
-                          <div className="flex items-center space-x-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              {/* 图片瀑布流容器 - 添加相对定位以便定位遮罩层 */}
+              <div className="relative"> {/* 添加底部内边距为遮罩层留出空间 */}
+                {/* 图片瀑布流 */}
+                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance] space-y-0">
+                  {files.map((file) => {
+                    const imageUrl = `${apiEndpoint}/images/${file.file_name}`;
+                    
+                    // 使用真实图片的纵横比
+                    const aspectRatio = getImageAspectRatio(imageUrl, file.id);
+                    
+                    return (
+                      <div 
+                        key={file.id} 
+                        className="mb-3 overflow-hidden rounded-md group break-inside-avoid cursor-pointer relative inline-block w-full"
+                        onClick={() => openPreview(file)}
+                      >
+                        <img 
+                          src={imageUrl} 
+                          alt={file.original_name}
+                          className="w-full object-cover transition-all duration-500 hover:brightness-110 group-hover:scale-110 group-hover:shadow-lg"
+                          style={{ aspectRatio }}
+                          loading="lazy"
+                          onLoad={(e) => {
+                            // 图片加载完成后，设置正确的宽高比
+                            const img = e.target as HTMLImageElement;
+                            if (img.naturalWidth && img.naturalHeight) {
+                              img.style.aspectRatio = `${img.naturalWidth}/${img.naturalHeight}`;
+                            }
+                          }}
+                        />
+                        
+                        {/* 分享按钮组 - 提高 z-index，放在最上层 */}
+                        <div 
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex space-x-2 z-20"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }}
+                        >
+                          {/* URL 链接 */}
+                          <button 
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              
+                              try {
+                                navigator.clipboard.writeText(`${apiEndpoint}/images/${file.file_name}`);
+                                
+                                // 显示复制成功提示
+                                const target = e.currentTarget;
+                                const originalContent = target.innerHTML;
+                                target.innerHTML = `<svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                                
+                                setTimeout(() => {
+                                  target.innerHTML = originalContent;
+                                }, 1000);
+                              } catch (err) {
+                                console.error('Failed to copy:', err);
+                              }
+                            }}
+                            title="复制URL链接"
+                          >
+                            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
-                            <span className="truncate max-w-[100px]">{file.username}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <FileTypeIcon type={file.file_type} />
+                          </button>
+
+                          {/* HTML 代码 */}
+                          <button 
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              
+                              try {
+                                navigator.clipboard.writeText(`<img src="${apiEndpoint}/images/${file.file_name}" alt="${file.original_name}" />`);
+                                
+                                // 显示复制成功提示
+                                const target = e.currentTarget;
+                                const originalContent = target.innerHTML;
+                                target.innerHTML = `<svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                                
+                                setTimeout(() => {
+                                  target.innerHTML = originalContent;
+                                }, 1000);
+                              } catch (err) {
+                                console.error('Failed to copy:', err);
+                              }
+                            }}
+                            title="复制HTML代码"
+                          >
+                            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                          </button>
+
+                          {/* Markdown 代码 */}
+                          <button 
+                            type="button"
+                            className="w-8 h-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center hover:bg-white dark:hover:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              
+                              try {
+                                navigator.clipboard.writeText(`![${file.original_name}](${apiEndpoint}/images/${file.file_name})`);
+                                
+                                // 显示复制成功提示
+                                const target = e.currentTarget;
+                                const originalContent = target.innerHTML;
+                                target.innerHTML = `<svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                                
+                                setTimeout(() => {
+                                  target.innerHTML = originalContent;
+                                }, 1000);
+                              } catch (err) {
+                                console.error('Failed to copy:', err);
+                              }
+                            }}
+                            title="复制Markdown代码"
+                          >
+                            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        {/* Hover overlay with subtle info */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                          <div className="flex items-center justify-between text-white text-opacity-90 text-xs">
+                            <div className="flex items-center space-x-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span className="truncate max-w-[100px]">{file.username}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <FileTypeIcon type={file.file_type} />
+                            </div>
                           </div>
                         </div>
+                        
+                        {/* NSFW tag if needed */}
+                        {file.tags && file.tags.includes('nsfw') && (
+                          <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
+                            NSFW
+                          </div>
+                        )}
                       </div>
-                      
-                      {/* NSFW tag if needed */}
-                      {file.tags && file.tags.includes('nsfw') && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-500 text-white text-xs font-medium rounded">
-                          NSFW
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {pagination.hasMore && (
-                <div className="flex justify-center mt-10">
-                  <Button 
-                    variant="secondary" 
-                    onClick={loadMore}
-                    loading={loading}
-                    disabled={loading}
-                  >
-                    {loading ? '加载中...' : '加载更多图片'}
-                  </Button>
+                    );
+                  })}
                 </div>
-              )}
+                
+                {/* 底部渐变遮罩层 - 只在有更多数据时显示 */}
+                {pagination.hasMore && (
+                  <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-50/95 via-gray-50/70 to-transparent dark:from-gray-900/95 dark:via-gray-900/70 pointer-events-none"></div>
+                )}
+                
+                {/* 加载更多按钮 - 放置在渐变遮罩层上 */}
+                {pagination.hasMore && (
+                  <div className="absolute bottom-10 left-0 right-0 text-center z-10">
+                    <button
+                      onClick={loadMore}
+                      disabled={loading}
+                      className="inline-flex items-center justify-center px-8 py-2.5 text-sm font-medium text-gray-600 bg-white/80 dark:bg-gray-800/80 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800 rounded-full shadow-md border border-gray-200 dark:border-gray-700 transition-colors focus:outline-none backdrop-blur-sm"
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>加载中...</span>
+                        </>
+                      ) : (
+                        <span>加载更多</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
               
               {files.length === 0 && !loading && (
                 <div className="text-center p-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
